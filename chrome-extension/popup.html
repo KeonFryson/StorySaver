@@ -1,54 +1,345 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>Story Saver</title>
+	<title>StorySaver</title>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<style>
 		body {
-			font-family: sans-serif;
-			min-width: 200px;
+			font-family: 'Inter', system-ui, sans-serif;
+			background: #f9fafb;
+			color: #1e293b;
+			margin: 0;
+			padding: 0;
+			min-width: 320px;
 		}
+
+		.card {
+			background: #fff;
+			border: 1px solid #e5e7eb;
+			border-radius: 0.75rem;
+			box-shadow: 0 2px 8px 0 rgba(0,0,0,0.04);
+			padding: 1.5rem 1.25rem;
+			margin: 1.5rem auto 0 auto;
+			max-width: 340px;
+		}
+
+		.title {
+			font-size: 1.5rem;
+			font-weight: 700;
+			color: #2563eb;
+			margin-bottom: 0.25rem;
+			text-align: center;
+		}
+
+		.subtitle {
+			font-size: 0.95rem;
+			color: #64748b;
+			text-align: center;
+			margin-bottom: 1.25rem;
+		}
+
+		form {
+			display: flex;
+			flex-direction: column;
+			gap: 0.75rem;
+		}
+
+		input[type="text"], input[type="password"], input[type="email"], textarea {
+			padding: 0.5rem 0.75rem;
+			border: 1px solid #d1d5db;
+			border-radius: 0.5rem;
+			font-size: 1rem;
+			background: #fff;
+			color: #1e293b;
+			transition: border 0.2s;
+		}
+
+			input[type="text"]:focus, input[type="password"]:focus, input[type="email"]:focus, textarea:focus {
+				border-color: #2563eb;
+				outline: none;
+			}
 
 		button {
-			background: #3b82f6;
+			background: #2563eb;
 			color: #fff;
 			border: none;
-			border-radius: 5px;
-			padding: 10px 20px;
+			border-radius: 0.5rem;
+			padding: 0.5rem 0;
 			font-size: 1rem;
+			font-weight: 500;
 			cursor: pointer;
+			transition: background 0.2s;
 		}
 
-			button:active {
-				background: #2563eb;
+			button:hover, button:active {
+				background: #1d4ed8;
 			}
 
 		#status {
-			margin-top: 10px;
+			margin-top: 0.75rem;
 			color: #10b981;
+			font-size: 0.95rem;
+			text-align: center;
+		}
+
+		#error {
+			color: #ef4444;
+			font-size: 0.95rem;
+			text-align: center;
+			margin-top: 0.5rem;
 		}
 
 		#loginStatus {
-			margin-top: 10px;
+			margin-top: 0.5rem;
+			font-size: 0.95rem;
+			text-align: center;
+		}
+
+		#loggedInBox {
+			text-align: center;
+			margin-top: 1rem;
+		}
+
+		#userInfo {
+			font-size: 1rem;
+			color: #2563eb;
+			font-weight: 600;
+			margin-bottom: 0.5rem;
+		}
+
+		#logoutBtn, #saveBtn {
+			width: 100%;
+			margin-top: 0.5rem;
+		}
+
+		#toggle-signup {
+			background: none;
+			color: #2563eb;
+			border: none;
+			padding: 0;
+			font-size: 0.95rem;
+			cursor: pointer;
+			margin-top: 0.5rem;
+			text-align: center;
+			text-decoration: underline;
+			transition: color 0.2s;
+		}
+
+			#toggle-signup:hover {
+				color: #1d4ed8;
+			}
+
+		#saveStoryForm {
+			display: none;
+			margin-top: 1rem;
 		}
 	</style>
 </head>
 <body>
-	<!-- Login Form -->
-	<form id="loginForm">
-		<input type="text" id="username" placeholder="Username" required />
-		<input type="password" id="password" placeholder="Password" required />
-		<button type="submit">Login</button>
-	</form>
-	<div id="loginStatus"></div>
-
-	<!-- Logged-in State -->
-	<div id="loggedInBox" style="display:none;">
-		<div id="userInfo"></div>
-		<button id="logoutBtn" style="margin-top:10px;">Logout</button>
+	<div class="card">
+		<div class="title">StorySaver</div>
+		<div class="subtitle">Save your favorite stories from anywhere</div>
+		<!-- Login/Signup Form -->
+		<form id="auth-form" class="space-y-4">
+			<div>
+				<label for="email" class="block text-sm font-medium text-gray-900 mb-2">
+					Email
+				</label>
+				<input id="email"
+					   type="email"
+					   class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+					   placeholder="your@email.com"
+					   required />
+			</div>
+			<div>
+				<label for="password" class="block text-sm font-medium text-gray-900 mb-2">
+					Password
+				</label>
+				<input id="password"
+					   type="password"
+					   class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+					   placeholder="••••••••"
+					   required />
+			</div>
+			<button type="submit"
+					class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors font-medium">
+				Sign In
+			</button>
+		</form>
+		<div class="mt-4 text-center">
+			<button type="button"
+					id="toggle-signup"
+					class="text-blue-600 hover:text-blue-700 text-sm">
+				Need an account? Sign up
+			</button>
+		</div>
+		<div id="loginStatus"></div>
+		<!-- Save Story Form (hidden by default) -->
+		<form id="saveStoryForm">
+			<div>
+				<input id="story-title" type="text" placeholder="Story Title" required />
+			</div>
+			<div>
+				<input id="story-url" type="text" placeholder="Story URL" />
+			</div>
+			<div>
+				<textarea id="story-summary" rows="2" placeholder="Summary"></textarea>
+			</div>
+			<button type="submit">Save Story</button>
+		</form>
+		<div id="status"></div>
+		<!-- Logged-in State -->
+		<div id="loggedInBox" style="display:none;">
+			<div id="userInfo"></div>
+			<button id="logoutBtn">Logout</button>
+		</div>
 	</div>
+	<script>
+		const authForm = document.getElementById('auth-form');
+		const toggleBtn = document.getElementById('toggle-signup');
+		const loginStatus = document.getElementById('loginStatus');
+		const saveStoryForm = document.getElementById('saveStoryForm');
+		const statusDiv = document.getElementById('status');
+		const loggedInBox = document.getElementById('loggedInBox');
+		const userInfo = document.getElementById('userInfo');
+		const logoutBtn = document.getElementById('logoutBtn');
 
-	<button id="saveBtn" style="display:none; margin-top:10px;">Save Story</button>
-	<div id="status"></div>
-	<script src="popup.js"></script>
+		let isSignUp = false;
+		let currentUser = null;
+
+		// Toggle sign up / sign in
+		toggleBtn.addEventListener('click', () => {
+			isSignUp = !isSignUp;
+			const submitBtn = authForm.querySelector('button[type="submit"]');
+			if (isSignUp) {
+				toggleBtn.textContent = 'Already have an account? Sign in';
+				submitBtn.textContent = 'Create Account';
+			} else {
+				toggleBtn.textContent = 'Need an account? Sign up';
+				submitBtn.textContent = 'Sign In';
+			}
+			loginStatus.textContent = '';
+		});
+
+		// Handle login/signup
+		authForm.addEventListener('submit', async (e) => {
+			e.preventDefault();
+			const email = document.getElementById('email').value;
+			const password = document.getElementById('password').value;
+			loginStatus.style.color = '#1e293b';
+			loginStatus.textContent = isSignUp ? 'Creating account...' : 'Signing in...';
+			try {
+				if (isSignUp) {
+					const res = await fetch('/api/users', {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({ email, username: email, password })
+					});
+					const data = await res.json();
+					if (res.ok) {
+						loginStatus.style.color = '#10b981';
+						loginStatus.textContent = 'Account created! Please sign in.';
+						setTimeout(() => {
+							toggleBtn.click();
+						}, 1200);
+					} else {
+						loginStatus.style.color = '#ef4444';
+						loginStatus.textContent = data.error || 'Sign up failed.';
+					}
+				} else {
+					const res = await fetch('/api/auth', {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({ email, password })
+					});
+					const data = await res.json();
+					if (res.ok && data.user) {
+						loginStatus.style.color = '#10b981';
+						loginStatus.textContent = 'Signed in!';
+						currentUser = data.user;
+						localStorage.setItem('storySaverUser', JSON.stringify(currentUser));
+						showLoggedInState(currentUser.email);
+					} else {
+						loginStatus.style.color = '#ef4444';
+						loginStatus.textContent = data.error || 'Invalid credentials!';
+					}
+				}
+			} catch (err) {
+				loginStatus.style.color = '#ef4444';
+				loginStatus.textContent = 'Network error.';
+			}
+		});
+
+		function showLoggedInState(email) {
+			authForm.style.display = 'none';
+			toggleBtn.style.display = 'none';
+			saveStoryForm.style.display = 'flex';
+			loggedInBox.style.display = 'block';
+			userInfo.textContent = 'Welcome, ' + email;
+			statusDiv.textContent = '';
+		}
+
+		// Handle logout
+		logoutBtn.addEventListener('click', () => {
+			currentUser = null;
+			localStorage.removeItem('storySaverUser');
+			authForm.style.display = 'flex';
+			toggleBtn.style.display = 'inline-block';
+			saveStoryForm.style.display = 'none';
+			loggedInBox.style.display = 'none';
+			loginStatus.textContent = '';
+			statusDiv.textContent = '';
+			authForm.reset();
+			saveStoryForm.reset();
+		});
+
+		// Handle save story
+		saveStoryForm.addEventListener('submit', async (e) => {
+			e.preventDefault();
+			statusDiv.style.color = '#1e293b';
+			statusDiv.textContent = 'Saving...';
+			const user = currentUser || JSON.parse(localStorage.getItem('storySaverUser') || 'null');
+			if (!user) {
+				statusDiv.style.color = '#ef4444';
+				statusDiv.textContent = 'Please sign in first.';
+				return;
+			}
+			const newStory = {
+				user_id: user.id,
+				title: document.getElementById('story-title').value,
+				url: document.getElementById('story-url').value,
+				description: document.getElementById('story-summary').value
+			};
+			try {
+				const res = await fetch('/api/stories', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify(newStory)
+				});
+				if (res.ok) {
+					statusDiv.style.color = '#10b981';
+					statusDiv.textContent = 'Story saved!';
+					saveStoryForm.reset();
+				} else {
+					const data = await res.json();
+					statusDiv.style.color = '#ef4444';
+					statusDiv.textContent = data.error || 'Failed to save story.';
+				}
+			} catch (err) {
+				statusDiv.style.color = '#ef4444';
+				statusDiv.textContent = 'Network error.';
+			}
+		});
+
+		// Auto-login if user info is stored
+		document.addEventListener('DOMContentLoaded', () => {
+			const user = JSON.parse(localStorage.getItem('storySaverUser') || 'null');
+			if (user) {
+				currentUser = user;
+				showLoggedInState(user.email);
+			}
+		});
+	</script>
 </body>
 </html>
