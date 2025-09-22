@@ -8,6 +8,7 @@
  * Learn more at https://developers.cloudflare.com/workers/
  */
 import WebHtml from './Webpage.html';
+import { EmailMessage } from "cloudflare:email";
 export default {
 	async fetch(request, env) {
 		const url = new URL(request.url);
