@@ -523,7 +523,11 @@
 					</h3>
 					${story.author ? `<p class="text-xs text-gray-600">by ${story.author}</p>` : ''}
 				</div>
-				${story.chapter ? `<span class="ml-2 px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded font-semibold">Chapter ${story.chapter}</span>` : ''}
+				${story.chapter ? (
+					story.url
+						? `<a href="${story.url}" target="_blank" class="ml-2 px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded font-semibold hover:underline focus:outline-none" title="Go to story">Chapter ${story.chapter}</a>`
+						: `<span class="ml-2 px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded font-semibold">Chapter ${story.chapter}</span>`
+				) : ''}
 			</div>
 			${story.description ? `
 				<p class="text-gray-900 text-sm mb-3 line-clamp-3">
