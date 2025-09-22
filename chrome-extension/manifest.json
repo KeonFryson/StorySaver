@@ -5,7 +5,8 @@
 	"description": "Save your reading progress on SpaceBattles threads.",
 	"permissions": [ "storage", "scripting", "activeTab" ],
 	"host_permissions": [
-		"https://forums.spacebattles.com/*"
+		"https://forums.spacebattles.com/*",
+		"https://storysaver.k-m-fryson112115.workers.dev/*"
 	],
 	"action": {
 		"default_popup": "popup.html",
