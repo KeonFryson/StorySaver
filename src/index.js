@@ -151,6 +151,28 @@ export default {
 			return json(results);
 		}
 
+		if (pathname.startsWith("/api/stories/") && request.method === "DELETE") {
+			const id = pathname.split("/").pop();
+			console.log(`[DEBUG] DELETE /api/stories/${id}`);
+			if (!id) {
+				return json({ error: "Missing story id" }, 400);
+			}
+			try {
+				const stmt = env.storytracker_db.prepare(
+					"DELETE FROM stories WHERE id = ?"
+				);
+				const result = await stmt.bind(id).run();
+				if (result.changes === 0) {
+					return json({ error: "Story not found" }, 404);
+				}
+				console.log(`[DEBUG] Story deleted: ${id}`);
+				return json({ success: true });
+			} catch (err) {
+				console.log(`[DEBUG] Error deleting story:`, err);
+				return json({ error: err.message }, 400);
+			}
+		}
+
 		// --- CHAPTERS ---
 
 		// Create chapter: POST /api/chapters { story_id, title, content, chapter_number }
