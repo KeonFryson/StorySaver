@@ -1,41 +1,41 @@
 -- Users table
 CREATE TABLE users (
-  id INTEGER IDENTITY(1,1) PRIMARY KEY,
-  username NVARCHAR(255) UNIQUE,
-  email NVARCHAR(255) UNIQUE,
-  password NVARCHAR(255),
-  salt NVARCHAR(255),
-  created_at DATETIME DEFAULT GETDATE()
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  username TEXT UNIQUE,
+  email TEXT UNIQUE,
+  password TEXT,
+  salt TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Stories table
 CREATE TABLE stories (
-  id INTEGER IDENTITY(1,1) PRIMARY KEY,
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER,
-  title NVARCHAR(255),
-  description NVARCHAR(MAX),
-  created_at DATETIME DEFAULT GETDATE(),
+  title TEXT,
+  description TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY(user_id) REFERENCES users(id)
 );
 
 -- Chapters table
 CREATE TABLE chapters (
-  id INTEGER IDENTITY(1,1) PRIMARY KEY,
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
   story_id INTEGER,
-  title NVARCHAR(255),
-  content NVARCHAR(MAX),
+  title TEXT,
+  content TEXT,
   chapter_number INTEGER,
-  created_at DATETIME DEFAULT GETDATE(),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY(story_id) REFERENCES stories(id)
 );
 
 -- Favorites / Tracking table
 CREATE TABLE user_story_tracking (
-  id INTEGER IDENTITY(1,1) PRIMARY KEY,
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER,
   story_id INTEGER,
   current_chapter INTEGER,
-  updated_at DATETIME DEFAULT GETDATE(),
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY(user_id) REFERENCES users(id),
   FOREIGN KEY(story_id) REFERENCES stories(id)
 );
