@@ -185,70 +185,14 @@
 		</div>
 	</div>
 	<script>
-		// Mock Cloudflare KV storage simulation
-		const mockKVStorage = {
-			users: new Map(),
-			userCount: 1234
-		};
-
-		// Dark mode toggle logic
-		const darkModeClassList = [
-			'bg-white', 'bg-gray-50', 'text-gray-900', 'bg-gray-100', 'bg-gray-200', 'bg-blue-600', 'bg-blue-700', 'text-gray-600', 'text-gray-800'
-		];
-		const darkModeReplacements = {
-			'bg-white': 'bg-gray-900',
-			'bg-gray-50': 'bg-gray-950',
-			'text-gray-900': 'text-gray-100',
-			'bg-gray-100': 'bg-gray-800',
-			'bg-gray-200': 'bg-gray-700',
-			'bg-blue-600': 'bg-blue-500',
-			'bg-blue-700': 'bg-blue-900',
-			'text-gray-600': 'text-gray-400',
-			'text-gray-800': 'text-gray-200'
-		};
-
-		function setDarkMode(enabled) {
-			const body = document.getElementById('body-root');
-			if (enabled) {
-				body.classList.add('dark');
-				// Replace classes for dark mode
-				document.querySelectorAll('*').forEach(el => {
-					darkModeClassList.forEach(cls => {
-						if (el.classList.contains(cls)) {
-							el.classList.remove(cls);
-							if (darkModeReplacements[cls]) {
-								el.classList.add(darkModeReplacements[cls]);
-							}
-						}
-					});
-				});
-				localStorage.setItem('storySaverDarkMode', '1');
-			} else {
-				body.classList.remove('dark');
-				// Replace classes for light mode
-				document.querySelectorAll('*').forEach(el => {
-					Object.entries(darkModeReplacements).forEach(([light, dark]) => {
-						if (el.classList.contains(dark)) {
-							el.classList.remove(dark);
-							el.classList.add(light);
-						}
-					});
-				});
-				localStorage.setItem('storySaverDarkMode', '0');
-			}
-		}
+		// Remove mockKVStorage and all its usage for authentication
 
 		document.addEventListener('DOMContentLoaded', function () {
-			// Always start on dashboard, hide auth page
 			document.getElementById('auth-page').classList.add('hidden');
 			document.getElementById('dashboard-page').classList.remove('hidden');
 			document.getElementById('welcome-user').textContent = 'Welcome, Guest';
 			document.getElementById('logout-btn').classList.add('hidden');
 			document.getElementById('signin-btn').classList.remove('hidden');
-
-			// Update user count
-			document.getElementById('user-count').textContent = mockKVStorage.userCount.toLocaleString();
-			document.getElementById('header-user-count').textContent = mockKVStorage.userCount.toLocaleString() + ' users';
 
 			// Sign In button shows auth page
 			document.getElementById('signin-btn').addEventListener('click', function () {
@@ -256,7 +200,7 @@
 				document.getElementById('auth-page').classList.remove('hidden');
 			});
 
-			// Dark mode button
+			// Dark mode button (unchanged)
 			const darkBtn = document.getElementById('darkmode-btn');
 			let darkMode = localStorage.getItem('storySaverDarkMode') === '1';
 			setDarkMode(darkMode);
@@ -267,48 +211,56 @@
 				darkBtn.textContent = darkMode ? 'Light Mode' : 'Dark Mode';
 			});
 
-			// Auth form handling
 			document.getElementById('auth-form').addEventListener('submit', handleAuth);
 			document.getElementById('toggle-signup').addEventListener('click', toggleSignUp);
 			document.getElementById('story-form').addEventListener('submit', handleSaveStory);
 			document.getElementById('logout-btn').addEventListener('click', handleLogout);
 
 			// If user is already logged in, show dashboard as logged in
-			const savedUser = localStorage.getItem('storySaverUser ');
+			const savedUser = localStorage.getItem('storySaverUser');
 			if (savedUser) {
-				showDashboard(savedUser);
-				loadStories(savedUser);
+				const user = JSON.parse(savedUser);
+				showDashboard(user.email);
+				loadStories(user.id);
 			} else {
 				renderStories([]);
 			}
 		});
 
-		function handleAuth(e) {
+		async function handleAuth(e) {
 			e.preventDefault();
 			const email = document.getElementById('email').value;
 			const password = document.getElementById('password').value;
 			const isSignUp = document.getElementById('toggle-signup').textContent === 'Already have an account? Sign in';
 
 			if (isSignUp) {
-				if (mockKVStorage.users.has(email)) {
-					alert('User  already exists!');
-					return;
-				}
-				mockKVStorage.users.set(email, {
-					password: btoa(password),
-					stories: []
+				// Sign up: call POST /api/users
+				const res = await fetch('/api/users', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ email, username: email, password })
 				});
-				mockKVStorage.userCount++;
-				alert('Account created successfully!');
-				toggleSignUp();
-			} else {
-				const userData = mockKVStorage.users.get(email);
-				if (userData && userData.password === btoa(password)) {
-					localStorage.setItem('storySaverUser ', email);
-					showDashboard(email);
-					loadStories(email);
+				const data = await res.json();
+				if (res.ok) {
+					alert('Account created successfully!');
+					toggleSignUp();
 				} else {
-					alert('Invalid credentials!');
+					alert(data.error || 'Sign up failed');
+				}
+			} else {
+				// Sign in: call POST /api/auth
+				const res = await fetch('/api/auth', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ email, password })
+				});
+				const data = await res.json();
+				if (res.ok && data.user) {
+					localStorage.setItem('storySaverUser', JSON.stringify(data.user));
+					showDashboard(data.user.email);
+					loadStories(data.user.id);
+				} else {
+					alert(data.error || 'Invalid credentials!');
 				}
 			}
 		}
@@ -333,33 +285,41 @@
 			document.getElementById('signin-btn').classList.add('hidden');
 		}
 
-		function loadStories(userEmail) {
-			const userData = mockKVStorage.users.get(userEmail);
-			if (userData) {
-				renderStories(userData.stories);
-			} else {
+		// Example: Load stories for a user (replace with your own API logic)
+		async function loadStories(userId) {
+			if (!userId) {
 				renderStories([]);
+				return;
 			}
+			const res = await fetch(`/api/stories?user_id=${encodeURIComponent(userId)}`);
+			const stories = res.ok ? await res.json() : [];
+			renderStories(stories);
 		}
 
-		function handleSaveStory(e) {
+		// Example: Save story (replace with your own API logic)
+		async function handleSaveStory(e) {
 			e.preventDefault();
-			const user = localStorage.getItem('storySaverUser ');
-			if (!user) return;
-			const userData = mockKVStorage.users.get(user);
-			if (userData) {
-				const newStory = {
-					title: document.getElementById('story-title').value,
-					author: document.getElementById('story-author').value,
-					url: document.getElementById('story-url').value,
-					content: document.getElementById('story-content').value,
-					tags: document.getElementById('story-tags').value,
-					id: Date.now(),
-					savedAt: new Date().toISOString()
-				};
-				userData.stories.unshift(newStory);
-				renderStories(userData.stories);
+			const user = JSON.parse(localStorage.getItem('storySaverUser') || 'null');
+			if (!user) {
+				alert('Please sign in to save stories.');
+				return;
+			}
+			const newStory = {
+				user_id: user.id,
+				title: document.getElementById('story-title').value,
+				description: document.getElementById('story-content').value
+			};
+			const res = await fetch('/api/stories', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(newStory)
+			});
+			if (res.ok) {
+				loadStories(user.id);
 				document.getElementById('story-form').reset();
+			} else {
+				const data = await res.json();
+				alert(data.error || 'Failed to save story');
 			}
 		}
 
@@ -376,62 +336,26 @@
 			emptyState.classList.add('hidden');
 			storiesGrid.classList.remove('hidden');
 			storiesGrid.innerHTML = stories.map(story => `
-							<div class="bg-white rounded-lg border border-gray-200 p-4 shadow-sm hover:shadow-md transition-shadow">
-								<div class="flex justify-between items-start mb-3">
-									<h3 class="font-semibold text-gray-900 text-lg line-clamp-2">
-										${story.title}
-									</h3>
-									<button
-										onclick="handleDeleteStory(${story.id})"
-										class="text-red-600 hover:text-red-700 text-sm"
-									>
-										Delete
-									</button>
-								</div>
-								${story.author ? `<p class="text-gray-600 text-sm mb-2">by ${story.author}</p>` : ''}
-								${story.url ? `
-									<a
-										href="${story.url}"
-										target="_blank"
-										rel="noopener noreferrer"
-										class="text-blue-600 hover:text-blue-700 text-sm mb-3 block"
-									>
-										View Original
-									</a>
-								` : ''}
-								${story.content ? `
-									<p class="text-gray-900 text-sm mb-3 line-clamp-3">
-										${story.content}
-									</p>
-								` : ''}
-								${story.tags ? `
-									<div class="flex flex-wrap gap-1">
-										${story.tags.split(',').map(tag => `
-											<span class="bg-gray-200 text-gray-800 px-2 py-1 rounded-full text-xs">
-												${tag.trim()}
-											</span>
-										`).join('')}
-									</div>
-								` : ''}
-								<p class="text-xs text-gray-600 mt-3">
-									Saved on ${new Date(story.savedAt).toLocaleDateString()}
-								</p>
-							</div>
-						`).join('');
-		}
-
-		function handleDeleteStory(storyId) {
-			const user = localStorage.getItem('storySaverUser ');
-			if (!user) return;
-			const userData = mockKVStorage.users.get(user);
-			if (userData) {
-				userData.stories = userData.stories.filter(s => s.id !== storyId);
-				renderStories(userData.stories);
-			}
+				<div class="bg-white rounded-lg border border-gray-200 p-4 shadow-sm hover:shadow-md transition-shadow">
+					<div class="flex justify-between items-start mb-3">
+						<h3 class="font-semibold text-gray-900 text-lg line-clamp-2">
+							${story.title}
+						</h3>
+					</div>
+					${story.description ? `
+						<p class="text-gray-900 text-sm mb-3 line-clamp-3">
+							${story.description}
+						</p>
+					` : ''}
+					<p class="text-xs text-gray-600 mt-3">
+						Saved on ${new Date(story.created_at).toLocaleDateString()}
+					</p>
+				</div>
+			`).join('');
 		}
 
 		function handleLogout() {
-			localStorage.removeItem('storySaverUser ');
+			localStorage.removeItem('storySaverUser');
 			document.getElementById('dashboard-page').classList.remove('hidden');
 			document.getElementById('auth-page').classList.add('hidden');
 			document.getElementById('auth-form').reset();
