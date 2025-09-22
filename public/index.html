@@ -211,6 +211,7 @@
 	</div>
 	<script>
 		function setDarkMode(enabled) {
+			let editingStoryId = null;
 			const body = document.getElementById('body-root');
 			const dashboard = document.getElementById('dashboard-page');
 			const auth = document.getElementById('auth-page');
@@ -486,21 +487,33 @@
 				url: document.getElementById('story-url').value,
 				tags: document.getElementById('story-tags').value
 			};
-			const res = await fetch('/api/stories', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(newStory)
-			});
+			let res;
+			if (editingStoryId) {
+				res = await fetch(`/api/stories/${encodeURIComponent(editingStoryId)}`, {
+					method: 'PUT',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify(newStory)
+				});
+			} else {
+				res = await fetch('/api/stories', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify(newStory)
+				});
+			}
 			if (res.ok) {
 				loadStories(user.id);
 				document.getElementById('story-form').reset();
 				document.getElementById('add-story-modal').classList.add('hidden');
 				document.getElementById('add-story-modal-backdrop').style.display = 'none';
+				editingStoryId = null;
+				document.querySelector('#story-form button[type="submit"]').textContent = 'Save Story';
 			} else {
 				const data = await res.json();
 				alert(data.error || 'Failed to save story');
 			}
 		}
+
 
 		function renderStories(stories) {
 			const storiesGrid = document.getElementById('stories-grid');
@@ -539,7 +552,10 @@
 			<p class="text-xs text-gray-600 mt-3">
 				Saved on ${new Date(story.created_at).toLocaleDateString()}
 			</p>
-			<button class="remove-story-btn mt-3 bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-xs" data-story-id="${story.id}">Remove</button>
+			<div class="flex gap-2 mt-3">
+				<button class="edit-story-btn bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600 text-xs" data-story-id="${story.id}">Edit</button>
+				<button class="remove-story-btn bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-xs" data-story-id="${story.id}">Remove</button>
+			</div>
 		</div>
 	`).join('');
 			const darkMode = localStorage.getItem('storySaverDarkMode') === '1';
@@ -552,7 +568,39 @@
 					handleRemoveStory(storyId);
 				});
 			});
+			// Attach edit handlers
+			document.querySelectorAll('.edit-story-btn').forEach(btn => {
+				btn.addEventListener('click', function () {
+					const storyId = this.getAttribute('data-story-id');
+					const story = stories.find(s => s.id == storyId);
+					if (story) openEditModal(story);
+				});
+			});
 		}
+
+		function openEditModal(story) {
+			editingStoryId = story.id;
+			document.getElementById('add-story-modal').classList.remove('hidden');
+			document.getElementById('add-story-modal-backdrop').style.display = 'block';
+			document.getElementById('story-title').value = story.title || '';
+			document.getElementById('story-author').value = story.author || '';
+			document.getElementById('story-chapter').value = story.chapter || '';
+			document.getElementById('story-url').value = story.url || '';
+			document.getElementById('story-content').value = story.description || '';
+			document.getElementById('story-tags').value = story.tags || '';
+			document.querySelector('#story-form button[type="submit"]').textContent = 'Update Story';
+		}
+		// Reset edit mode when closing modal
+		document.getElementById('close-add-story-btn').addEventListener('click', function () {
+			editingStoryId = null;
+			document.getElementById('story-form').reset();
+			document.querySelector('#story-form button[type="submit"]').textContent = 'Save Story';
+		});
+		document.getElementById('add-story-modal-backdrop').addEventListener('click', function () {
+			editingStoryId = null;
+			document.getElementById('story-form').reset();
+			document.querySelector('#story-form button[type="submit"]').textContent = 'Save Story';
+		});
 
 		async function handleRemoveStory(storyId) {
 			if (!confirm('Are you sure you want to remove this story?')) return;
