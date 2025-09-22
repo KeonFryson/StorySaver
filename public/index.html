@@ -515,30 +515,57 @@
 			emptyState.classList.add('hidden');
 			storiesGrid.classList.remove('hidden');
 			storiesGrid.innerHTML = stories.map(story => `
-						<div class="bg-white rounded-lg border border-gray-200 p-4 shadow-sm hover:shadow-md transition-shadow story-card">
-							<div class="flex justify-between items-start mb-3">
-								<div>
-									<h3 class="font-semibold text-gray-900 text-lg line-clamp-2">
-										${story.title}
-									</h3>
-									${story.author ? `<p class="text-xs text-gray-600">by ${story.author}</p>` : ''}
-								</div>
-								${story.chapter ? `<span class="ml-2 px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded font-semibold">Chapter ${story.chapter}</span>` : ''}
-							</div>
-							${story.description ? `
-								<p class="text-gray-900 text-sm mb-3 line-clamp-3">
-									${story.description}
-								</p>
-							` : ''}
-							${story.url ? `<a href="${story.url}" target="_blank" class="text-blue-600 text-xs underline break-all">Read Original</a><br/>` : ''}
-							${story.tags ? `<p class="text-xs text-gray-500 mt-1">Tags: ${story.tags}</p>` : ''}
-							<p class="text-xs text-gray-600 mt-3">
-								Saved on ${new Date(story.created_at).toLocaleDateString()}
-							</p>
-						</div>
-					`).join('');
+		<div class="bg-white rounded-lg border border-gray-200 p-4 shadow-sm hover:shadow-md transition-shadow story-card" data-story-id="${story.id}">
+			<div class="flex justify-between items-start mb-3">
+				<div>
+					<h3 class="font-semibold text-gray-900 text-lg line-clamp-2">
+						${story.title}
+					</h3>
+					${story.author ? `<p class="text-xs text-gray-600">by ${story.author}</p>` : ''}
+				</div>
+				${story.chapter ? `<span class="ml-2 px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded font-semibold">Chapter ${story.chapter}</span>` : ''}
+			</div>
+			${story.description ? `
+				<p class="text-gray-900 text-sm mb-3 line-clamp-3">
+					${story.description}
+				</p>
+			` : ''}
+			${story.url ? `<a href="${story.url}" target="_blank" class="text-blue-600 text-xs underline break-all">Read Original</a><br/>` : ''}
+			${story.tags ? `<p class="text-xs text-gray-500 mt-1">Tags: ${story.tags}</p>` : ''}
+			<p class="text-xs text-gray-600 mt-3">
+				Saved on ${new Date(story.created_at).toLocaleDateString()}
+			</p>
+			<button class="remove-story-btn mt-3 bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-xs" data-story-id="${story.id}">Remove</button>
+		</div>
+	`).join('');
 			const darkMode = localStorage.getItem('storySaverDarkMode') === '1';
 			setDarkMode(darkMode);
+
+			// Attach remove handlers
+			document.querySelectorAll('.remove-story-btn').forEach(btn => {
+				btn.addEventListener('click', function () {
+					const storyId = this.getAttribute('data-story-id');
+					handleRemoveStory(storyId);
+				});
+			});
+		}
+
+		async function handleRemoveStory(storyId) {
+			if (!confirm('Are you sure you want to remove this story?')) return;
+			const user = JSON.parse(localStorage.getItem('storySaverUser') || 'null');
+			if (!user) {
+				alert('Please sign in to remove stories.');
+				return;
+			}
+			const res = await fetch(`/api/stories/${encodeURIComponent(storyId)}`, {
+				method: 'DELETE'
+			});
+			if (res.ok) {
+				loadStories(user.id);
+			} else {
+				const data = await res.json();
+				alert(data.error || 'Failed to remove story');
+			}
 		}
 
 		function handleLogout() {

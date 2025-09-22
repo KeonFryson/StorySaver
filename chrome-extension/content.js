@@ -42,25 +42,64 @@ function getSBPage() {
 }
 
 function saveStory() {
-	var title = getSBTitle();
-	var author = getSBAuthor();
-	var description = getSBDescription();
-	var chapters = getSBChapters();
-	var chapter = "Page " + getSBPage();
-	var url = window.location.href;
-	var dateSaved = new Date().toISOString();
+	console.debug("saveStory called");
 
-	var story = { title, author, description, chapters, chapter, url, dateSaved };
+	var title = getSBTitle();
+	console.debug("Title:", title);
+
+	var author = getSBAuthor();
+	console.debug("Author:", author);
+
+	var description = getSBDescription();
+	console.debug("Description:", description);
+
+	var chapters = getSBChapters();
+	console.debug("Chapters:", chapters);
+
+	var chapter = "Page " + getSBPage();
+	console.debug("Current page:", chapter);
+
+	var url = window.location.href;
+	console.debug("Current URL:", url);
+
+	var dateSaved = new Date().toISOString();
+	console.debug("Date saved:", dateSaved);
+
+	const currentAnchor = window.location.hash;
+	console.debug("Current anchor:", currentAnchor);
+
+	let currentThreadmark = null;
+	if (currentAnchor) {
+		currentThreadmark = chapters.find(c => c.url.endsWith(currentAnchor));
+		console.debug("Threadmark match by anchor:", currentThreadmark);
+	}
+
+	var story = {
+		title,
+		author,
+		description,
+		chapters,
+		chapter,
+		url,
+		dateSaved,
+		currentThreadmark
+	};
+	console.debug("Story object to save:", story);
 
 	var savedStories = JSON.parse(localStorage.getItem('savedStories')) || [];
+	console.debug("Loaded savedStories:", savedStories);
+
 	savedStories = savedStories.filter(s => s.url !== url);
+	console.debug("Filtered savedStories:", savedStories);
+
 	savedStories.push(story);
+	console.debug("Updated savedStories:", savedStories);
+
 	localStorage.setItem('savedStories', JSON.stringify(savedStories));
+	console.debug("Story saved to localStorage");
 
-	return { title, author, description, chapters, chapter };
-}
-
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+	return { title, author, description, chapters, chapter, currentThreadmark };
+} chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 	if (request.action === "saveStory") {
 		const result = saveStory();
 		sendResponse({ success: true, ...result });
