@@ -26,10 +26,14 @@
 			margin-top: 10px;
 			color: #10b981;
 		}
+
+		#loginStatus {
+			margin-top: 10px;
+		}
 	</style>
 </head>
 <body>
-	<!-- popup.html -->
+	<!-- Login Form -->
 	<form id="loginForm">
 		<input type="text" id="username" placeholder="Username" required />
 		<input type="password" id="password" placeholder="Password" required />
@@ -37,7 +41,13 @@
 	</form>
 	<div id="loginStatus"></div>
 
-	<button id="saveBtn">Save Story</button>
+	<!-- Logged-in State -->
+	<div id="loggedInBox" style="display:none;">
+		<div id="userInfo"></div>
+		<button id="logoutBtn" style="margin-top:10px;">Logout</button>
+	</div>
+
+	<button id="saveBtn" style="display:none; margin-top:10px;">Save Story</button>
 	<div id="status"></div>
 	<script src="popup.js"></script>
 </body>

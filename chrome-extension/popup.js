@@ -53,3 +53,34 @@ document.getElementById('saveBtn').addEventListener('click', function () {
 		});
 	});
 });
+document.getElementById('loginForm').addEventListener('submit', async function (e) {
+	e.preventDefault();
+	const email = document.getElementById('username').value;
+	const password = document.getElementById('password').value;
+	const loginStatus = document.getElementById('loginStatus');
+
+	try {
+		const response = await fetch('https://storysaver.k-m-fryson112115.workers.dev/api/auth', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ email, password })
+		});
+		const data = await response.json();
+		if (response.ok && data.user) {
+			// Store userId and email for later use
+			chrome.storage.local.set({ authToken: data.token, userEmail: data.user.email, userId: data.user.id }, function () {
+				loginStatus.textContent = "Login successful!";
+				loginStatus.style.color = "#10b981";
+				updateUI(true, data.user.email);
+			});
+		} else {
+			loginStatus.textContent = data.error || "Login failed. Check your credentials.";
+			loginStatus.style.color = "#ef4444";
+			updateUI(false, '');
+		}
+	} catch (error) {
+		loginStatus.textContent = "Network error.";
+		loginStatus.style.color = "#ef4444";
+		updateUI(false, '');
+	}
+});
