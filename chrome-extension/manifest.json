@@ -1,0 +1,24 @@
+{
+	"manifest_version": 3,
+	"name": "Story Saver for SpaceBattles",
+	"version": "1.0",
+	"description": "Save your reading progress on SpaceBattles threads.",
+	"permissions": [ "storage", "scripting", "activeTab" ],
+	"host_permissions": [
+		"https://forums.spacebattles.com/*"
+	],
+	"action": {
+		"default_popup": "popup.html",
+		"default_icon": {
+			"16": "icon.png",
+			"32": "icon.png",
+			"128": "icon.png"
+		}
+	},
+	"content_scripts": [
+		{
+			"matches": [ "https://forums.spacebattles.com/*" ],
+			"js": [ "content.js" ]
+		}
+	]
+}
