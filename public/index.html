@@ -3,341 +3,443 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Story Saver for AO3 & SpaceBattles</title>
+	<title>StorySaver</title>
+	<script src="https://cdn.tailwindcss.com"></script>
 	<style>
-		:root {
-			--primary: #3b82f6;
-			--primary-hover: #2563eb;
-			--secondary: #f8fafc;
-			--text: #1e293b;
-			--border: #e2e8f0;
-			--success: #10b981;
-			--card-bg: #ffffff;
-			--shadow: rgba(0, 0, 0, 0.1);
+		.line-clamp-2 {
+			display: -webkit-box;
+			-webkit-line-clamp: 2;
+			-webkit-box-orient: vertical;
+			overflow: hidden;
 		}
 
-		* {
-			margin: 0;
-			padding: 0;
-			box-sizing: border-box;
-		}
-
-		body {
-			font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-			line-height: 1.6;
-			color: var(--text);
-			background-color: var(--secondary);
-			padding: 0;
-		}
-
-		.container {
-			max-width: 900px;
-			margin: 0 auto;
-			padding: 2rem 1rem;
-		}
-
-		header {
-			text-align: center;
-			margin-bottom: 3rem;
-		}
-
-		h1 {
-			font-size: 2.5rem;
-			margin-bottom: 0.5rem;
-			color: var(--primary);
-		}
-
-		.subtitle {
-			font-size: 1.2rem;
-			color: #64748b;
-			margin-bottom: 2rem;
-		}
-
-		.card {
-			background-color: var(--card-bg);
-			border-radius: 12px;
-			box-shadow: 0 4px 6px var(--shadow);
-			padding: 2rem;
-			margin-bottom: 2rem;
-		}
-
-		.bookmarklet-container {
-			text-align: center;
-			margin: 2rem 0;
-		}
-
-		.bookmarklet {
-			display: inline-block;
-			padding: 1rem 2rem;
-			background-color: var(--primary);
-			color: white;
-			text-decoration: none;
-			border-radius: 8px;
-			font-weight: 600;
-			font-size: 1.1rem;
-			box-shadow: 0 2px 4px var(--shadow);
-			transition: all 0.2s ease;
-			cursor: grab;
-		}
-
-			.bookmarklet:hover {
-				background-color: var(--primary-hover);
-				transform: translateY(-2px);
-				box-shadow: 0 4px 8px var(--shadow);
-			}
-
-		.instructions {
-			margin-top: 1.5rem;
-		}
-
-		ol {
-			text-align: left;
-			margin-left: 1.5rem;
-			margin-top: 1rem;
-		}
-
-		li {
-			margin-bottom: 0.8rem;
-		}
-
-		.saved-stories {
-			margin-top: 3rem;
-		}
-
-		.story-item {
-			display: flex;
-			justify-content: space-between;
-			align-items: center;
-			padding: 1rem;
-			border: 1px solid var(--border);
-			border-radius: 8px;
-			margin-bottom: 1rem;
-			background-color: var(--card-bg);
-		}
-
-		.story-info {
-			flex: 1;
-		}
-
-		.story-title {
-			font-weight: 600;
-			margin-bottom: 0.3rem;
-		}
-
-		.story-chapter {
-			color: #64748b;
-			font-size: 0.9rem;
-		}
-
-		.btn {
-			padding: 0.5rem 1rem;
-			border: none;
-			border-radius: 6px;
-			cursor: pointer;
-			font-weight: 500;
-			transition: all 0.2s ease;
-		}
-
-		.btn-primary {
-			background-color: var(--primary);
-			color: white;
-		}
-
-			.btn-primary:hover {
-				background-color: var(--primary-hover);
-			}
-
-		.btn-text {
-			background: none;
-			color: var(--primary);
-			text-decoration: underline;
-		}
-
-			.btn-text:hover {
-				color: var(--primary-hover);
-			}
-
-		.empty-state {
-			text-align: center;
-			padding: 2rem;
-			color: #64748b;
-		}
-
-		.success-message {
-			text-align: center;
-			color: var(--success);
-			margin-top: 1rem;
-			font-weight: 500;
-			display: none;
-		}
-
-		.support-note {
-			margin-top: 3rem;
-			text-align: center;
-			font-size: 0.9rem;
-			color: #64748b;
-		}
-
-		footer {
-			text-align: center;
-			margin-top: 4rem;
-			padding: 2rem 0;
-			color: #64748b;
-			border-top: 1px solid var(--border);
-		}
-
-		@media (max-width: 768px) {
-			.container {
-				padding: 1rem;
-			}
-
-			h1 {
-				font-size: 2rem;
-			}
-
-			.story-item {
-				flex-direction: column;
-				align-items: flex-start;
-			}
-
-			.story-actions {
-				margin-top: 1rem;
-				align-self: flex-end;
-			}
+		.line-clamp-3 {
+			display: -webkit-box;
+			-webkit-line-clamp: 3;
+			-webkit-box-orient: vertical;
+			overflow: hidden;
 		}
 	</style>
 </head>
-<body>
-	<div class="container">
-		<header>
-			<h1>Story Saver</h1>
-			<p class="subtitle">Never lose your place in AO3 or SpaceBattles stories again</p>
-		</header>
-
-		<div class="card">
-			<h2>Get Started</h2>
-			<p>Drag the button below to your bookmarks bar. When reading a story on AO3 or SpaceBattles, click the bookmark to save your progress.</p>
-
-			<div class="bookmarklet-container">
-				<a href="javascript:(function(){var d=document;var s=d.createElement('script');s.src='https://cdn.jsdelivr.net/gh/KeonFryson/story-saver-bookmarklet@main/bookmarklet.js?v='+Date.now();d.body.appendChild(s);})();" class="bookmarklet">Save Story</a>
-
-				<div class="instructions">
-					<p>Drag this button to your bookmarks bar:</p>
-					<ol>
-						<li>Make sure your bookmarks bar is visible (Ctrl+Shift+B on Chrome)</li>
-						<li>Drag the "Save Story" button to your bookmarks bar</li>
-						<li>Visit any story on AO3 or SpaceBattles and click the bookmarklet to save your progress</li>
-					</ol>
+<body class="min-h-screen bg-white text-gray-900 transition-colors duration-300" id="body-root">
+	<div id="app">
+		<!-- Auth Page (hidden by default) -->
+		<div id="auth-page" class="min-h-screen bg-gray-50 text-gray-900 flex items-center justify-center p-4 hidden">
+			<div class="w-full max-w-md bg-white rounded-lg shadow-lg p-6 border border-gray-200">
+				<div class="text-center mb-6">
+					<h1 class="text-3xl font-bold text-blue-600 mb-2">StorySaver</h1>
+					<p class="text-gray-600">Archive your favorite stories like AO3</p>
+					<div class="mt-4 p-3 bg-gray-100 rounded-lg">
+						<p class="text-sm text-gray-600">
+							<span class="font-semibold text-blue-600" id="user-count">1,234</span> users saving stories
+						</p>
+					</div>
 				</div>
-			</div>
-
-			<div class="success-message" id="successMessage">
-				Story saved successfully!
+				<form id="auth-form" class="space-y-4">
+					<div>
+						<label for="email" class="block text-sm font-medium text-gray-900 mb-2">
+							Email
+						</label>
+						<input id="email"
+							   type="email"
+							   class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+							   placeholder="your@email.com"
+							   required />
+					</div>
+					<div>
+						<label for="password" class="block text-sm font-medium text-gray-900 mb-2">
+							Password
+						</label>
+						<input id="password"
+							   type="password"
+							   class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+							   placeholder="••••••••"
+							   required />
+					</div>
+					<button type="submit"
+							class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors font-medium">
+						Sign In
+					</button>
+				</form>
+				<div class="mt-4 text-center">
+					<button type="button"
+							id="toggle-signup"
+							class="text-blue-600 hover:text-blue-700 text-sm">
+						Need an account? Sign up
+					</button>
+				</div>
+				<div class="mt-6 p-4 bg-gray-100 rounded-lg">
+					<h3 class="font-semibold text-gray-900 mb-2">Why StorySaver?</h3>
+					<ul class="text-sm text-gray-600 space-y-1">
+						<li>• Save stories from AO3, SpaceBattles, and more</li>
+						<li>• Organize with tags and categories</li>
+						<li>• Access your library anywhere</li>
+						<li>• Never lose your favorite reads</li>
+					</ul>
+				</div>
 			</div>
 		</div>
 
-		<div class="saved-stories">
-			<h2>Your Saved Stories</h2>
-			<div id="savedStoriesList">
-				<div class="empty-state" id="emptyState">
-					<p>You haven't saved any stories yet.</p>
-					<p>Visit a story on AO3 or SpaceBattles and use the bookmarklet to save your progress.</p>
+		<!-- Dashboard Page (visible by default) -->
+		<div id="dashboard-page" class="min-h-screen bg-gray-50 text-gray-900 transition-colors duration-300">
+			<!-- Header -->
+			<header class="bg-white border-b border-gray-200 shadow-sm transition-colors duration-300">
+				<div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+					<div>
+						<h1 class="text-2xl font-bold text-blue-600">StorySaver</h1>
+						<p class="text-sm text-gray-600">Your personal story archive</p>
+					</div>
+					<div class="flex items-center gap-4">
+						<div class="bg-gray-100 px-3 py-1 rounded-full transition-colors duration-300">
+							<span class="text-sm text-gray-600" id="header-user-count">
+								1,234 users
+							</span>
+						</div>
+						<span class="text-gray-900" id="welcome-user">Welcome, Guest</span>
+						<button id="darkmode-btn"
+								class="bg-gray-200 text-gray-800 px-3 py-2 rounded-md hover:bg-gray-300 transition-colors text-sm"
+								title="Toggle dark mode">
+							Dark Mode
+						</button>
+						<button id="signin-btn"
+								class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors text-sm">
+							Sign In
+						</button>
+						<button id="logout-btn"
+								class="bg-gray-200 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-300 transition-colors text-sm hidden">
+							Logout
+						</button>
+					</div>
+				</div>
+			</header>
+			<div class="max-w-6xl mx-auto px-4 py-8">
+				<!-- Add Story Form -->
+				<div class="bg-white rounded-lg border border-gray-200 p-6 mb-8 shadow-sm transition-colors duration-300">
+					<h2 class="text-xl font-semibold text-gray-900 mb-4">Add New Story</h2>
+					<form id="story-form" class="space-y-4">
+						<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+							<div>
+								<label class="block text-sm font-medium text-gray-900 mb-2">
+									Title *
+								</label>
+								<input id="story-title"
+									   type="text"
+									   class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+									   placeholder="Story title"
+									   required />
+							</div>
+							<div>
+								<label class="block text-sm font-medium text-gray-900 mb-2">
+									Author
+								</label>
+								<input id="story-author"
+									   type="text"
+									   class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+									   placeholder="Author name" />
+							</div>
+						</div>
+						<div>
+							<label class="block text-sm font-medium text-gray-900 mb-2">
+								URL
+							</label>
+							<input id="story-url"
+								   type="url"
+								   class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+								   placeholder="https://archiveofourown.org/works/..." />
+						</div>
+						<div>
+							<label class="block text-sm font-medium text-gray-900 mb-2">
+								Content or Summary
+							</label>
+							<textarea id="story-content"
+									  rows="3"
+									  class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+									  placeholder="Paste content or write a summary..."></textarea>
+						</div>
+						<div>
+							<label class="block text-sm font-medium text-gray-900 mb-2">
+								Tags (comma-separated)
+							</label>
+							<input id="story-tags"
+								   type="text"
+								   class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+								   placeholder="fanfiction, sci-fi, romance" />
+						</div>
+						<button type="submit"
+								class="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors font-medium">
+							Save Story
+						</button>
+					</form>
+				</div>
+				<!-- Stories Grid -->
+				<div>
+					<h2 class="text-2xl font-semibold text-gray-900 mb-6">Your Saved Stories (<span id="stories-count">0</span>)</h2>
+					<div id="empty-state" class="text-center py-12 bg-gray-100 rounded-lg border border-gray-200">
+						<p class="text-gray-600">No stories saved yet. Add your first story above!</p>
+					</div>
+					<div id="stories-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 hidden">
+						<!-- Stories will be dynamically added here -->
+					</div>
 				</div>
 			</div>
-		</div>
-
-		<div class="support-note">
-			<p>Currently supports: Archive of Our Own (AO3) and SpaceBattles forums</p>
 		</div>
 	</div>
-
-	<footer>
-		<p>Story Saver &copy; 2023 | Your reading progress is stored locally in your browser</p>
-	</footer>
-
 	<script>
+		// Mock Cloudflare KV storage simulation
+		const mockKVStorage = {
+			users: new Map(),
+			userCount: 1234
+		};
+
+		// Dark mode toggle logic
+		const darkModeClassList = [
+			'bg-white', 'bg-gray-50', 'text-gray-900', 'bg-gray-100', 'bg-gray-200', 'bg-blue-600', 'bg-blue-700', 'text-gray-600', 'text-gray-800'
+		];
+		const darkModeReplacements = {
+			'bg-white': 'bg-gray-900',
+			'bg-gray-50': 'bg-gray-950',
+			'text-gray-900': 'text-gray-100',
+			'bg-gray-100': 'bg-gray-800',
+			'bg-gray-200': 'bg-gray-700',
+			'bg-blue-600': 'bg-blue-500',
+			'bg-blue-700': 'bg-blue-900',
+			'text-gray-600': 'text-gray-400',
+			'text-gray-800': 'text-gray-200'
+		};
+
+		function setDarkMode(enabled) {
+			const body = document.getElementById('body-root');
+			if (enabled) {
+				body.classList.add('dark');
+				// Replace classes for dark mode
+				document.querySelectorAll('*').forEach(el => {
+					darkModeClassList.forEach(cls => {
+						if (el.classList.contains(cls)) {
+							el.classList.remove(cls);
+							if (darkModeReplacements[cls]) {
+								el.classList.add(darkModeReplacements[cls]);
+							}
+						}
+					});
+				});
+				localStorage.setItem('storySaverDarkMode', '1');
+			} else {
+				body.classList.remove('dark');
+				// Replace classes for light mode
+				document.querySelectorAll('*').forEach(el => {
+					Object.entries(darkModeReplacements).forEach(([light, dark]) => {
+						if (el.classList.contains(dark)) {
+							el.classList.remove(dark);
+							el.classList.add(light);
+						}
+					});
+				});
+				localStorage.setItem('storySaverDarkMode', '0');
+			}
+		}
+
 		document.addEventListener('DOMContentLoaded', function () {
-			// Display saved stories
-			displaySavedStories();
+			// Always start on dashboard, hide auth page
+			document.getElementById('auth-page').classList.add('hidden');
+			document.getElementById('dashboard-page').classList.remove('hidden');
+			document.getElementById('welcome-user').textContent = 'Welcome, Guest';
+			document.getElementById('logout-btn').classList.add('hidden');
+			document.getElementById('signin-btn').classList.remove('hidden');
 
-			// Check if we're coming from a successful save
-			const urlParams = new URLSearchParams(window.location.search);
-			if (urlParams.get('saved') === 'true') {
-				const successMessage = document.getElementById('successMessage');
-				successMessage.style.display = 'block';
+			// Update user count
+			document.getElementById('user-count').textContent = mockKVStorage.userCount.toLocaleString();
+			document.getElementById('header-user-count').textContent = mockKVStorage.userCount.toLocaleString() + ' users';
 
-				// Remove the parameter from URL without refreshing
-				const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
-				window.history.replaceState({}, document.title, newUrl);
+			// Sign In button shows auth page
+			document.getElementById('signin-btn').addEventListener('click', function () {
+				document.getElementById('dashboard-page').classList.add('hidden');
+				document.getElementById('auth-page').classList.remove('hidden');
+			});
 
-				// Hide message after 3 seconds
-				setTimeout(() => {
-					successMessage.style.display = 'none';
-				}, 3000);
+			// Dark mode button
+			const darkBtn = document.getElementById('darkmode-btn');
+			let darkMode = localStorage.getItem('storySaverDarkMode') === '1';
+			setDarkMode(darkMode);
+			darkBtn.textContent = darkMode ? 'Light Mode' : 'Dark Mode';
+			darkBtn.addEventListener('click', function () {
+				darkMode = !darkMode;
+				setDarkMode(darkMode);
+				darkBtn.textContent = darkMode ? 'Light Mode' : 'Dark Mode';
+			});
+
+			// Auth form handling
+			document.getElementById('auth-form').addEventListener('submit', handleAuth);
+			document.getElementById('toggle-signup').addEventListener('click', toggleSignUp);
+			document.getElementById('story-form').addEventListener('submit', handleSaveStory);
+			document.getElementById('logout-btn').addEventListener('click', handleLogout);
+
+			// If user is already logged in, show dashboard as logged in
+			const savedUser = localStorage.getItem('storySaverUser ');
+			if (savedUser) {
+				showDashboard(savedUser);
+				loadStories(savedUser);
+			} else {
+				renderStories([]);
 			}
 		});
 
-		function displaySavedStories() {
-			const savedStories = JSON.parse(localStorage.getItem('savedStories')) || [];
-			const savedStoriesList = document.getElementById('savedStoriesList');
-			const emptyState = document.getElementById('emptyState');
+		function handleAuth(e) {
+			e.preventDefault();
+			const email = document.getElementById('email').value;
+			const password = document.getElementById('password').value;
+			const isSignUp = document.getElementById('toggle-signup').textContent === 'Already have an account? Sign in';
 
-			if (savedStories.length === 0) {
-				emptyState.style.display = 'block';
+			if (isSignUp) {
+				if (mockKVStorage.users.has(email)) {
+					alert('User  already exists!');
+					return;
+				}
+				mockKVStorage.users.set(email, {
+					password: btoa(password),
+					stories: []
+				});
+				mockKVStorage.userCount++;
+				alert('Account created successfully!');
+				toggleSignUp();
+			} else {
+				const userData = mockKVStorage.users.get(email);
+				if (userData && userData.password === btoa(password)) {
+					localStorage.setItem('storySaverUser ', email);
+					showDashboard(email);
+					loadStories(email);
+				} else {
+					alert('Invalid credentials!');
+				}
+			}
+		}
+
+		function toggleSignUp() {
+			const button = document.getElementById('toggle-signup');
+			const submitBtn = document.getElementById('auth-form').querySelector('button[type="submit"]');
+			if (button.textContent === 'Need an account? Sign up') {
+				button.textContent = 'Already have an account? Sign in';
+				submitBtn.textContent = 'Create Account';
+			} else {
+				button.textContent = 'Need an account? Sign up';
+				submitBtn.textContent = 'Sign In';
+			}
+		}
+
+		function showDashboard(userEmail) {
+			document.getElementById('auth-page').classList.add('hidden');
+			document.getElementById('dashboard-page').classList.remove('hidden');
+			document.getElementById('welcome-user').textContent = 'Welcome, ' + userEmail;
+			document.getElementById('logout-btn').classList.remove('hidden');
+			document.getElementById('signin-btn').classList.add('hidden');
+		}
+
+		function loadStories(userEmail) {
+			const userData = mockKVStorage.users.get(userEmail);
+			if (userData) {
+				renderStories(userData.stories);
+			} else {
+				renderStories([]);
+			}
+		}
+
+		function handleSaveStory(e) {
+			e.preventDefault();
+			const user = localStorage.getItem('storySaverUser ');
+			if (!user) return;
+			const userData = mockKVStorage.users.get(user);
+			if (userData) {
+				const newStory = {
+					title: document.getElementById('story-title').value,
+					author: document.getElementById('story-author').value,
+					url: document.getElementById('story-url').value,
+					content: document.getElementById('story-content').value,
+					tags: document.getElementById('story-tags').value,
+					id: Date.now(),
+					savedAt: new Date().toISOString()
+				};
+				userData.stories.unshift(newStory);
+				renderStories(userData.stories);
+				document.getElementById('story-form').reset();
+			}
+		}
+
+		function renderStories(stories) {
+			const storiesGrid = document.getElementById('stories-grid');
+			const emptyState = document.getElementById('empty-state');
+			const storiesCount = document.getElementById('stories-count');
+			storiesCount.textContent = stories.length;
+			if (stories.length === 0) {
+				emptyState.classList.remove('hidden');
+				storiesGrid.classList.add('hidden');
 				return;
 			}
-
-			emptyState.style.display = 'none';
-			savedStoriesList.innerHTML = '';
-
-			// Sort stories by date saved (newest first)
-			savedStories.sort((a, b) => new Date(b.dateSaved) - new Date(a.dateSaved));
-
-			savedStories.forEach((story, index) => {
-				const storyElement = document.createElement('div');
-				storyElement.className = 'story-item';
-
-				storyElement.innerHTML = `
-						<div class="story-info">
-							<div class="story-title">${escapeHtml(story.title)}</div>
-							<div class="story-chapter">Chapter: ${escapeHtml(story.chapter)}</div>
-							<div class="story-url">${escapeHtml(story.url)}</div>
-							<div class="story-date">Saved: ${new Date(story.dateSaved).toLocaleString()}</div>
-						</div>
-						<div class="story-actions">
-							<button class="btn btn-primary" onclick="openStory('${escapeHtml(story.url)}')">Continue Reading</button>
-							<button class="btn btn-text" onclick="deleteStory(${index})">Delete</button>
-						</div>
-					`;
-
-				savedStoriesList.appendChild(storyElement);
-			});
+			emptyState.classList.add('hidden');
+			storiesGrid.classList.remove('hidden');
+			storiesGrid.innerHTML = stories.map(story => `
+							<div class="bg-white rounded-lg border border-gray-200 p-4 shadow-sm hover:shadow-md transition-shadow">
+								<div class="flex justify-between items-start mb-3">
+									<h3 class="font-semibold text-gray-900 text-lg line-clamp-2">
+										${story.title}
+									</h3>
+									<button
+										onclick="handleDeleteStory(${story.id})"
+										class="text-red-600 hover:text-red-700 text-sm"
+									>
+										Delete
+									</button>
+								</div>
+								${story.author ? `<p class="text-gray-600 text-sm mb-2">by ${story.author}</p>` : ''}
+								${story.url ? `
+									<a
+										href="${story.url}"
+										target="_blank"
+										rel="noopener noreferrer"
+										class="text-blue-600 hover:text-blue-700 text-sm mb-3 block"
+									>
+										View Original
+									</a>
+								` : ''}
+								${story.content ? `
+									<p class="text-gray-900 text-sm mb-3 line-clamp-3">
+										${story.content}
+									</p>
+								` : ''}
+								${story.tags ? `
+									<div class="flex flex-wrap gap-1">
+										${story.tags.split(',').map(tag => `
+											<span class="bg-gray-200 text-gray-800 px-2 py-1 rounded-full text-xs">
+												${tag.trim()}
+											</span>
+										`).join('')}
+									</div>
+								` : ''}
+								<p class="text-xs text-gray-600 mt-3">
+									Saved on ${new Date(story.savedAt).toLocaleDateString()}
+								</p>
+							</div>
+						`).join('');
 		}
 
-		function openStory(url) {
-			window.open(url, '_blank');
-		}
-
-		function deleteStory(index) {
-			const savedStories = JSON.parse(localStorage.getItem('savedStories')) || [];
-			if (index >= 0 && index < savedStories.length) {
-				savedStories.splice(index, 1);
-				localStorage.setItem('savedStories', JSON.stringify(savedStories));
-				displaySavedStories();
+		function handleDeleteStory(storyId) {
+			const user = localStorage.getItem('storySaverUser ');
+			if (!user) return;
+			const userData = mockKVStorage.users.get(user);
+			if (userData) {
+				userData.stories = userData.stories.filter(s => s.id !== storyId);
+				renderStories(userData.stories);
 			}
 		}
 
-		function escapeHtml(unsafe) {
-			if (!unsafe) return '';
-			return unsafe
-				.replace(/&/g, "&amp;")
-				.replace(/</g, "&lt;")
-				.replace(/>/g, "&gt;")
-				.replace(/"/g, "&quot;")
-				.replace(/'/g, "&#039;");
+		function handleLogout() {
+			localStorage.removeItem('storySaverUser ');
+			document.getElementById('dashboard-page').classList.remove('hidden');
+			document.getElementById('auth-page').classList.add('hidden');
+			document.getElementById('auth-form').reset();
+			document.getElementById('welcome-user').textContent = 'Welcome, Guest';
+			document.getElementById('logout-btn').classList.add('hidden');
+			document.getElementById('signin-btn').classList.remove('hidden');
+			renderStories([]);
 		}
-
-
 	</script>
 </body>
 </html>
