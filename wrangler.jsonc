@@ -4,7 +4,7 @@
  */
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "storytracker",
+	"name": "storysaver",
 	"main": "src/index.js",
 	"compatibility_date": "2025-09-22",
 	"compatibility_flags": [
