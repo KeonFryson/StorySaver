@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Story Saver for AO3 & SpaceBattles</title>
+	<style>
+		:root {
+			--primary: #3b82f6;
+			--primary-hover: #2563eb;
+			--secondary: #f8fafc;
+			--text: #1e293b;
+			--border: #e2e8f0;
+			--success: #10b981;
+			--card-bg: #ffffff;
+			--shadow: rgba(0, 0, 0, 0.1);
+		}
+
+		* {
+			margin: 0;
+			padding: 0;
+			box-sizing: border-box;
+		}
+
+		body {
+			font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+			line-height: 1.6;
+			color: var(--text);
+			background-color: var(--secondary);
+			padding: 0;
+		}
+
+		.container {
+			max-width: 900px;
+			margin: 0 auto;
+			padding: 2rem 1rem;
+		}
+
+		header {
+			text-align: center;
+			margin-bottom: 3rem;
+		}
+
+		h1 {
+			font-size: 2.5rem;
+			margin-bottom: 0.5rem;
+			color: var(--primary);
+		}
+
+		.subtitle {
+			font-size: 1.2rem;
+			color: #64748b;
+			margin-bottom: 2rem;
+		}
+
+		.card {
+			background-color: var(--card-bg);
+			border-radius: 12px;
+			box-shadow: 0 4px 6px var(--shadow);
+			padding: 2rem;
+			margin-bottom: 2rem;
+		}
+
+		.bookmarklet-container {
+			text-align: center;
+			margin: 2rem 0;
+		}
+
+		.bookmarklet {
+			display: inline-block;
+			padding: 1rem 2rem;
+			background-color: var(--primary);
+			color: white;
+			text-decoration: none;
+			border-radius: 8px;
+			font-weight: 600;
+			font-size: 1.1rem;
+			box-shadow: 0 2px 4px var(--shadow);
+			transition: all 0.2s ease;
+			cursor: grab;
+		}
+
+			.bookmarklet:hover {
+				background-color: var(--primary-hover);
+				transform: translateY(-2px);
+				box-shadow: 0 4px 8px var(--shadow);
+			}
+
+		.instructions {
+			margin-top: 1.5rem;
+		}
+
+		ol {
+			text-align: left;
+			margin-left: 1.5rem;
+			margin-top: 1rem;
+		}
+
+		li {
+			margin-bottom: 0.8rem;
+		}
+
+		.saved-stories {
+			margin-top: 3rem;
+		}
+
+		.story-item {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			padding: 1rem;
+			border: 1px solid var(--border);
+			border-radius: 8px;
+			margin-bottom: 1rem;
+			background-color: var(--card-bg);
+		}
+
+		.story-info {
+			flex: 1;
+		}
+
+		.story-title {
+			font-weight: 600;
+			margin-bottom: 0.3rem;
+		}
+
+		.story-chapter {
+			color: #64748b;
+			font-size: 0.9rem;
+		}
+
+		.btn {
+			padding: 0.5rem 1rem;
+			border: none;
+			border-radius: 6px;
+			cursor: pointer;
+			font-weight: 500;
+			transition: all 0.2s ease;
+		}
+
+		.btn-primary {
+			background-color: var(--primary);
+			color: white;
+		}
+
+			.btn-primary:hover {
+				background-color: var(--primary-hover);
+			}
+
+		.btn-text {
+			background: none;
+			color: var(--primary);
+			text-decoration: underline;
+		}
+
+			.btn-text:hover {
+				color: var(--primary-hover);
+			}
+
+		.empty-state {
+			text-align: center;
+			padding: 2rem;
+			color: #64748b;
+		}
+
+		.success-message {
+			text-align: center;
+			color: var(--success);
+			margin-top: 1rem;
+			font-weight: 500;
+			display: none;
+		}
+
+		.support-note {
+			margin-top: 3rem;
+			text-align: center;
+			font-size: 0.9rem;
+			color: #64748b;
+		}
+
+		footer {
+			text-align: center;
+			margin-top: 4rem;
+			padding: 2rem 0;
+			color: #64748b;
+			border-top: 1px solid var(--border);
+		}
+
+		@media (max-width: 768px) {
+			.container {
+				padding: 1rem;
+			}
+
+			h1 {
+				font-size: 2rem;
+			}
+
+			.story-item {
+				flex-direction: column;
+				align-items: flex-start;
+			}
+
+			.story-actions {
+				margin-top: 1rem;
+				align-self: flex-end;
+			}
+		}
+	</style>
+</head>
+<body>
+	<div class="container">
+		<header>
+			<h1>Story Saver</h1>
+			<p class="subtitle">Never lose your place in AO3 or SpaceBattles stories again</p>
+		</header>
+
+		<div class="card">
+			<h2>Get Started</h2>
+			<p>Drag the button below to your bookmarks bar. When reading a story on AO3 or SpaceBattles, click the bookmark to save your progress.</p>
+
+			<div class="bookmarklet-container">
+				<a href="javascript:(function(){var d=document;var s=d.createElement('script');s.src='https://cdn.jsdelivr.net/gh/your-username/story-saver-bookmarklet@main/bookmarklet.js?v='+Date.now();d.body.appendChild(s);})();" class="bookmarklet">Save Story</a>
+
+				<div class="instructions">
+					<p>Drag this button to your bookmarks bar:</p>
+					<ol>
+						<li>Make sure your bookmarks bar is visible (Ctrl+Shift+B on Chrome)</li>
+						<li>Drag the "Save Story" button to your bookmarks bar</li>
+						<li>Visit any story on AO3 or SpaceBattles and click the bookmarklet to save your progress</li>
+					</ol>
+				</div>
+			</div>
+
+			<div class="success-message" id="successMessage">
+				Story saved successfully!
+			</div>
+		</div>
+
+		<div class="saved-stories">
+			<h2>Your Saved Stories</h2>
+			<div id="savedStoriesList">
+				<div class="empty-state" id="emptyState">
+					<p>You haven't saved any stories yet.</p>
+					<p>Visit a story on AO3 or SpaceBattles and use the bookmarklet to save your progress.</p>
+				</div>
+			</div>
+		</div>
+
+		<div class="support-note">
+			<p>Currently supports: Archive of Our Own (AO3) and SpaceBattles forums</p>
+		</div>
+	</div>
+
+	<footer>
+		<p>Story Saver &copy; 2023 | Your reading progress is stored locally in your browser</p>
+	</footer>
+
+	<script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Display saved stories
+            displaySavedStories();
+
+            // Check if we're coming from a successful save
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('saved') === 'true') {
+                const successMessage = document.getElementById('successMessage');
+                successMessage.style.display = 'block';
+
+                // Remove the parameter from URL without refreshing
+                const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+                window.history.replaceState({}, document.title, newUrl);
+
+                // Hide message after 3 seconds
+                setTimeout(() => {
+                    successMessage.style.display = 'none';
+                }, 3000);
+            }
+        });
+
+        function displaySavedStories() {
+            const savedStories = JSON.parse(localStorage.getItem('savedStories')) || [];
+            const savedStoriesList = document.getElementById('savedStoriesList');
+            const emptyState = document.getElementById('emptyState');
+
+            if (savedStories.length === 0) {
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            emptyState.style.display = 'none';
+            savedStoriesList.innerHTML = '';
+
+            // Sort stories by date saved (newest first)
+            savedStories.sort((a, b) => new Date(b.dateSaved) - new Date(a.dateSaved));
+
+            savedStories.forEach((story, index) => {
+                const storyElement = document.createElement('div');
+                storyElement.className = 'story-item';
+
+                storyElement.innerHTML = `
+                    <div class="story-info">
+                        <div class="story-title">${escapeHtml(story.title)}</div>
+                        <div class="story-chapter">Chapter: ${escapeHtml(story.chapter)}</div>
+                        <div class="story-url">${escapeHtml(story.url)}</div>
+                        <div class="story-date">Saved: ${new Date(story.dateSaved).toLocaleString()}</div>
+                    </div>
+                    <div class="story-actions">
+                        <button class="btn btn-primary" onclick="openStory('${escapeHtml(story.url)}')">Continue Reading</button>
+                        <button class="btn btn-text" onclick="deleteStory(${index})">Delete</button>
+                    </div>
+                `;
+
+                savedStoriesList.appendChild(storyElement);
+            });
+        }
+
+        function openStory(url) {
+            window.open(url, '_blank');
+        }
+
+        function deleteStory(index) {
+            const savedStories = JSON.parse(localStorage.getItem('savedStories')) || [];
+            if (index >= 0 && index < savedStories.length) {
+                savedStories.splice(index, 1);
+                localStorage.setItem('savedStories', JSON.stringify(savedStories));
+                displaySavedStories();
+            }
+        }
+
+        function escapeHtml(unsafe) {
+            if (!unsafe) return '';
+            return unsafe
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+	</script>
+</body>
+</html>
