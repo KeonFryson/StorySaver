@@ -19,6 +19,18 @@
 			-webkit-box-orient: vertical;
 			overflow: hidden;
 		}
+
+		#add-story-modal-backdrop {
+			position: fixed;
+			inset: 0;
+			background: rgba(0,0,0,0.3);
+			z-index: 40;
+			display: none;
+		}
+
+		#add-story-modal {
+			z-index: 50;
+		}
 	</style>
 </head>
 <body class="min-h-screen bg-white text-gray-900 transition-colors duration-300" id="body-root">
@@ -85,11 +97,6 @@
 						<p class="text-sm text-gray-600">Your personal story archive</p>
 					</div>
 					<div class="flex items-center gap-4">
-						<!--<div class="bg-gray-100 px-3 py-1 rounded-full transition-colors duration-300">
-							<span class="text-sm text-gray-600" id="header-user-count">
-								1,234 users
-							</span>
-						</div>-->
 						<span class="text-gray-900" id="welcome-user">Welcome, Guest</span>
 						<button id="darkmode-btn"
 								class="bg-gray-200 text-gray-800 px-3 py-2 rounded-md hover:bg-gray-300 transition-colors text-sm"
@@ -107,64 +114,87 @@
 					</div>
 				</div>
 			</header>
-			<div class="max-w-6xl mx-auto px-4 py-8">
-				<!-- Add Story Form -->
-				<div class="bg-white rounded-lg border border-gray-200 p-6 mb-8 shadow-sm transition-colors duration-300 add-story-box">
-					<h2 class="text-xl font-semibold text-gray-900 mb-4">Add New Story</h2>
-					<form id="story-form" class="space-y-4">
-						<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-							<div>
-								<label class="block text-sm font-medium text-gray-900 mb-2">
-									Title *
-								</label>
-								<input id="story-title"
-									   type="text"
-									   class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-									   placeholder="Story title"
-									   required />
+			<div class="max-w-6xl mx-auto px-4 py-8 relative">
+				<!-- Floating + Button -->
+				<button id="show-add-story-btn"
+						class="fixed bottom-8 right-8 bg-blue-600 text-white rounded-full w-16 h-16 flex items-center justify-center text-4xl shadow-lg hover:bg-blue-700 transition-colors z-50"
+						title="Add New Story"
+						style="box-shadow: 0 4px 24px rgba(0,0,0,0.15);">
+					+
+				</button>
+
+				<!-- Add Story Modal (hidden by default) -->
+				<div id="add-story-modal-backdrop"></div>
+				<div id="add-story-modal" class="fixed inset-0 flex items-center justify-center hidden">
+					<div class="bg-white rounded-lg border border-gray-200 p-6 shadow-lg w-full max-w-lg relative add-story-box">
+						<button id="close-add-story-btn" class="absolute top-3 right-3 text-gray-400 hover:text-gray-700 text-2xl font-bold" title="Close">&times;</button>
+						<h2 class="text-xl font-semibold text-gray-900 mb-4">Add New Story</h2>
+						<form id="story-form" class="space-y-4">
+							<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+								<div>
+									<label class="block text-sm font-medium text-gray-900 mb-2">
+										Title *
+									</label>
+									<input id="story-title"
+										   type="text"
+										   class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+										   placeholder="Story title"
+										   required />
+								</div>
+								<div>
+									<label class="block text-sm font-medium text-gray-900 mb-2">
+										Author
+									</label>
+									<input id="story-author"
+										   type="text"
+										   class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+										   placeholder="Author name" />
+								</div>
+							</div>
+							<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+								<div>
+									<label class="block text-sm font-medium text-gray-900 mb-2">
+										Chapter
+									</label>
+									<input id="story-chapter"
+										   type="text"
+										   class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+										   placeholder="e.g. 1, 2, Prologue, etc." />
+								</div>
+								<div>
+									<label class="block text-sm font-medium text-gray-900 mb-2">
+										URL
+									</label>
+									<input id="story-url"
+										   type="url"
+										   class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+										   placeholder="https://archiveofourown.org/works/..." />
+								</div>
 							</div>
 							<div>
 								<label class="block text-sm font-medium text-gray-900 mb-2">
-									Author
+									Content or Summary
 								</label>
-								<input id="story-author"
+								<textarea id="story-content"
+										  rows="3"
+										  class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+										  placeholder="Paste content or write a summary..."></textarea>
+							</div>
+							<div>
+								<label class="block text-sm font-medium text-gray-900 mb-2">
+									Tags (comma-separated)
+								</label>
+								<input id="story-tags"
 									   type="text"
 									   class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-									   placeholder="Author name" />
+									   placeholder="fanfiction, sci-fi, romance" />
 							</div>
-						</div>
-						<div>
-							<label class="block text-sm font-medium text-gray-900 mb-2">
-								URL
-							</label>
-							<input id="story-url"
-								   type="url"
-								   class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-								   placeholder="https://archiveofourown.org/works/..." />
-						</div>
-						<div>
-							<label class="block text-sm font-medium text-gray-900 mb-2">
-								Content or Summary
-							</label>
-							<textarea id="story-content"
-									  rows="3"
-									  class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-									  placeholder="Paste content or write a summary..."></textarea>
-						</div>
-						<div>
-							<label class="block text-sm font-medium text-gray-900 mb-2">
-								Tags (comma-separated)
-							</label>
-							<input id="story-tags"
-								   type="text"
-								   class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-								   placeholder="fanfiction, sci-fi, romance" />
-						</div>
-						<button type="submit"
-								class="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors font-medium">
-							Save Story
-						</button>
-					</form>
+							<button type="submit"
+									class="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors font-medium">
+								Save Story
+							</button>
+						</form>
+					</div>
 				</div>
 				<!-- Stories Grid -->
 				<div>
@@ -199,17 +229,13 @@
 				'#auth-form input, #auth-form textarea, #auth-form select'
 			);
 
-			// Target the Why StorySaver box and its text
 			const whyBox = document.querySelector('#auth-page .bg-gray-100.rounded-lg, #auth-page .bg-gray-700.rounded-lg');
 			const whyBoxTexts = whyBox ? whyBox.querySelectorAll('.text-gray-900, .text-gray-600, .text-white') : [];
-
-			// Target the auth card itself
 			const authCard = document.querySelector('#auth-page > .bg-white, #auth-page > .bg-gray-900, #auth-page > .bg-gray-800, #auth-page > .bg-gray-700');
 
 			if (enabled) {
 				body.classList.remove(...removeClasses);
 				body.classList.add('bg-gray-900', 'text-white');
-
 				if (dashboard) {
 					dashboard.classList.remove(...removeClasses);
 					dashboard.classList.add('bg-gray-800', 'text-white');
@@ -230,7 +256,6 @@
 					input.classList.remove(...removeClasses);
 					input.classList.add('bg-gray-900', 'text-white', 'placeholder-gray-400', 'border-gray-600');
 				});
-				// Update text color for all text elements inside auth card
 				const authTexts = document.querySelectorAll(
 					'#auth-page .text-gray-900, #auth-page .text-gray-600, #auth-page .text-blue-600, #auth-page .font-semibold'
 				);
@@ -238,7 +263,6 @@
 					el.classList.remove('text-gray-900', 'text-gray-600', 'text-blue-600');
 					el.classList.add('text-white');
 				});
-				// Update text color for dashboard header and "Your Saved Stories" heading
 				const dashboardTexts = document.querySelectorAll(
 					'#dashboard-page .text-gray-900, #dashboard-page .text-gray-600'
 				);
@@ -246,7 +270,6 @@
 					el.classList.remove('text-gray-900', 'text-gray-600');
 					el.classList.add('text-white');
 				});
-				// Why StorySaver box dark mode
 				if (whyBox) {
 					whyBox.classList.remove('bg-gray-100', 'border-gray-200');
 					whyBox.classList.add('bg-gray-700', 'border-gray-600');
@@ -255,7 +278,6 @@
 					el.classList.remove('text-gray-900', 'text-gray-600');
 					el.classList.add('text-white');
 				});
-				// Auth card dark mode
 				if (authCard) {
 					authCard.classList.remove('bg-white', 'text-gray-900', 'border-gray-200');
 					authCard.classList.add('bg-gray-900', 'text-white', 'border-gray-600');
@@ -263,7 +285,6 @@
 			} else {
 				body.classList.remove(...removeClasses);
 				body.classList.add('bg-white', 'text-gray-900');
-
 				if (dashboard) {
 					dashboard.classList.remove(...removeClasses);
 					dashboard.classList.add('bg-gray-50', 'text-gray-900');
@@ -284,7 +305,6 @@
 					input.classList.remove(...removeClasses);
 					input.classList.add('bg-white', 'text-gray-900', 'placeholder-gray-500', 'border-gray-300');
 				});
-				// Restore text color for all text elements inside auth card
 				const authTexts = document.querySelectorAll(
 					'#auth-page .text-white'
 				);
@@ -292,26 +312,22 @@
 					el.classList.remove('text-white');
 					el.classList.add('text-gray-900');
 				});
-				// Restore text color for dashboard header and "Your Saved Stories" heading
 				const dashboardTexts = document.querySelectorAll(
 					'#dashboard-page .text-white'
 				);
 				dashboardTexts.forEach(el => {
 					el.classList.remove('text-white');
-					// Restore original color based on element type
 					if (el.tagName === 'H2' || el.id === 'welcome-user') {
 						el.classList.add('text-gray-900');
 					} else {
 						el.classList.add('text-gray-600');
 					}
 				});
-				// Ensure "Save Story" and "Sign In" buttons always have text-white
 				document.querySelectorAll(
 					'#story-form button[type="submit"], #signin-btn'
 				).forEach(btn => {
 					btn.classList.add('text-white');
 				});
-				// Why StorySaver box light mode
 				if (whyBox) {
 					whyBox.classList.remove('bg-gray-700', 'border-gray-600');
 					whyBox.classList.add('bg-gray-100', 'border-gray-200');
@@ -324,7 +340,6 @@
 						el.classList.add('text-gray-600');
 					}
 				});
-				// Auth card light mode
 				if (authCard) {
 					authCard.classList.remove('bg-gray-900', 'bg-gray-800', 'bg-gray-700', 'text-white', 'border-gray-600');
 					authCard.classList.add('bg-white', 'text-gray-900', 'border-gray-200');
@@ -333,7 +348,6 @@
 			localStorage.setItem('storySaverDarkMode', enabled ? '1' : '0');
 		}
 		document.addEventListener('DOMContentLoaded', function () {
-			console.log('[DEBUG] DOMContentLoaded');
 			document.getElementById('auth-page').classList.add('hidden');
 			document.getElementById('dashboard-page').classList.remove('hidden');
 			document.getElementById('welcome-user').textContent = 'Welcome, Guest';
@@ -341,11 +355,10 @@
 			document.getElementById('signin-btn').classList.remove('hidden');
 
 			document.getElementById('signin-btn').addEventListener('click', function () {
-				console.log('[DEBUG] Sign In button clicked');
 				document.getElementById('dashboard-page').classList.add('hidden');
 				document.getElementById('auth-page').classList.remove('hidden');
 				const darkMode = localStorage.getItem('storySaverDarkMode') === '1';
-				setDarkMode(darkMode); 
+				setDarkMode(darkMode);
 			});
 
 			const darkBtn = document.getElementById('darkmode-btn');
@@ -356,7 +369,6 @@
 				darkMode = !darkMode;
 				setDarkMode(darkMode);
 				darkBtn.textContent = darkMode ? 'Light Mode' : 'Dark Mode';
-				console.log('[DEBUG] Dark mode toggled:', darkMode);
 			});
 
 			document.getElementById('auth-form').addEventListener('submit', handleAuth);
@@ -364,14 +376,28 @@
 			document.getElementById('story-form').addEventListener('submit', handleSaveStory);
 			document.getElementById('logout-btn').addEventListener('click', handleLogout);
 
+			// Modal logic
+			document.getElementById('add-story-modal').classList.add('hidden');
+			document.getElementById('add-story-modal-backdrop').style.display = 'none';
+			document.getElementById('show-add-story-btn').addEventListener('click', function () {
+				document.getElementById('add-story-modal').classList.remove('hidden');
+				document.getElementById('add-story-modal-backdrop').style.display = 'block';
+			});
+			document.getElementById('close-add-story-btn').addEventListener('click', function () {
+				document.getElementById('add-story-modal').classList.add('hidden');
+				document.getElementById('add-story-modal-backdrop').style.display = 'none';
+			});
+			document.getElementById('add-story-modal-backdrop').addEventListener('click', function () {
+				document.getElementById('add-story-modal').classList.add('hidden');
+				document.getElementById('add-story-modal-backdrop').style.display = 'none';
+			});
+
 			const savedUser = localStorage.getItem('storySaverUser');
 			if (savedUser) {
 				const user = JSON.parse(savedUser);
-				console.log('[DEBUG] Found saved user:', user);
 				showDashboard(user.email);
 				loadStories(user.id);
 			} else {
-				console.log('[DEBUG] No saved user');
 				renderStories([]);
 			}
 		});
@@ -381,17 +407,14 @@
 			const email = document.getElementById('email').value;
 			const password = document.getElementById('password').value;
 			const isSignUp = document.getElementById('toggle-signup').textContent.trim() === 'Already have an account? Sign in';
-			console.log('[DEBUG] handleAuth:', { email, isSignUp });
 
 			if (isSignUp) {
-				console.log('[DEBUG] Attempting sign up');
 				const res = await fetch('/api/users', {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify({ email, username: email, password })
 				});
 				const data = await res.json();
-				console.log('[DEBUG] Sign up response:', data);
 				if (res.ok) {
 					alert('Account created successfully!');
 					toggleSignUp();
@@ -399,14 +422,12 @@
 					alert(data.error || 'Sign up failed');
 				}
 			} else {
-				console.log('[DEBUG] Attempting sign in');
 				const res = await fetch('/api/auth', {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify({ email, password })
 				});
 				const data = await res.json();
-				console.log('[DEBUG] Sign in response:', data);
 				if (res.ok && data.user) {
 					localStorage.setItem('storySaverUser', JSON.stringify(data.user));
 					showDashboard(data.user.email);
@@ -420,7 +441,6 @@
 		function toggleSignUp() {
 			const button = document.getElementById('toggle-signup');
 			const submitBtn = document.getElementById('auth-form').querySelector('button[type="submit"]');
-			console.log('[DEBUG] toggleSignUp clicked. Current text:', button.textContent.trim());
 			if (button.textContent.trim() === 'Need an account? Sign up') {
 				button.textContent = 'Already have an account? Sign in';
 				submitBtn.textContent = 'Create Account';
@@ -431,32 +451,28 @@
 		}
 
 		function showDashboard(userEmail) {
-			console.log('[DEBUG] showDashboard for:', userEmail);
 			document.getElementById('auth-page').classList.add('hidden');
 			document.getElementById('dashboard-page').classList.remove('hidden');
 			document.getElementById('welcome-user').textContent = 'Welcome, ' + userEmail;
 			document.getElementById('logout-btn').classList.remove('hidden');
 			document.getElementById('signin-btn').classList.add('hidden');
 			const darkMode = localStorage.getItem('storySaverDarkMode') === '1';
-			setDarkMode(darkMode); 
+			setDarkMode(darkMode);
 		}
 
 		async function loadStories(userId) {
-			console.log('[DEBUG] loadStories for userId:', userId);
 			if (!userId) {
 				renderStories([]);
 				return;
 			}
 			const res = await fetch(`/api/stories?user_id=${encodeURIComponent(userId)}`);
 			const stories = res.ok ? await res.json() : [];
-			console.log('[DEBUG] Stories loaded:', stories);
 			renderStories(stories);
 		}
 
 		async function handleSaveStory(e) {
 			e.preventDefault();
 			const user = JSON.parse(localStorage.getItem('storySaverUser') || 'null');
-			console.log('[DEBUG] handleSaveStory for user:', user);
 			if (!user) {
 				alert('Please sign in to save stories.');
 				return;
@@ -464,27 +480,29 @@
 			const newStory = {
 				user_id: user.id,
 				title: document.getElementById('story-title').value,
-				description: document.getElementById('story-content').value
+				description: document.getElementById('story-content').value,
+				chapter: document.getElementById('story-chapter').value,
+				author: document.getElementById('story-author').value,
+				url: document.getElementById('story-url').value,
+				tags: document.getElementById('story-tags').value
 			};
-			console.log('[DEBUG] Saving story:', newStory);
 			const res = await fetch('/api/stories', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify(newStory)
 			});
 			if (res.ok) {
-				console.log('[DEBUG] Story saved successfully');
 				loadStories(user.id);
 				document.getElementById('story-form').reset();
+				document.getElementById('add-story-modal').classList.add('hidden');
+				document.getElementById('add-story-modal-backdrop').style.display = 'none';
 			} else {
 				const data = await res.json();
-				console.log('[DEBUG] Failed to save story:', data);
 				alert(data.error || 'Failed to save story');
 			}
 		}
 
 		function renderStories(stories) {
-			console.log('[DEBUG] renderStories:', stories);
 			const storiesGrid = document.getElementById('stories-grid');
 			const emptyState = document.getElementById('empty-state');
 			const storiesCount = document.getElementById('stories-count');
@@ -497,29 +515,33 @@
 			emptyState.classList.add('hidden');
 			storiesGrid.classList.remove('hidden');
 			storiesGrid.innerHTML = stories.map(story => `
-					<div class="bg-white rounded-lg border border-gray-200 p-4 shadow-sm hover:shadow-md transition-shadow story-card">
-						<div class="flex justify-between items-start mb-3">
-							<h3 class="font-semibold text-gray-900 text-lg line-clamp-2">
-								${story.title}
-							</h3>
-						</div>
-						${story.description ? `
-							<p class="text-gray-900 text-sm mb-3 line-clamp-3">
-								${story.description}
+						<div class="bg-white rounded-lg border border-gray-200 p-4 shadow-sm hover:shadow-md transition-shadow story-card">
+							<div class="flex justify-between items-start mb-3">
+								<div>
+									<h3 class="font-semibold text-gray-900 text-lg line-clamp-2">
+										${story.title}
+									</h3>
+									${story.author ? `<p class="text-xs text-gray-600">by ${story.author}</p>` : ''}
+								</div>
+								${story.chapter ? `<span class="ml-2 px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded font-semibold">Chapter ${story.chapter}</span>` : ''}
+							</div>
+							${story.description ? `
+								<p class="text-gray-900 text-sm mb-3 line-clamp-3">
+									${story.description}
+								</p>
+							` : ''}
+							${story.url ? `<a href="${story.url}" target="_blank" class="text-blue-600 text-xs underline break-all">Read Original</a><br/>` : ''}
+							${story.tags ? `<p class="text-xs text-gray-500 mt-1">Tags: ${story.tags}</p>` : ''}
+							<p class="text-xs text-gray-600 mt-3">
+								Saved on ${new Date(story.created_at).toLocaleDateString()}
 							</p>
-						` : ''}
-						<p class="text-xs text-gray-600 mt-3">
-							Saved on ${new Date(story.created_at).toLocaleDateString()}
-						</p>
-					</div>
-				`).join('');
-			// Re-apply dark mode to new cards
+						</div>
+					`).join('');
 			const darkMode = localStorage.getItem('storySaverDarkMode') === '1';
 			setDarkMode(darkMode);
 		}
 
 		function handleLogout() {
-			console.log('[DEBUG] handleLogout');
 			localStorage.removeItem('storySaverUser');
 			document.getElementById('dashboard-page').classList.remove('hidden');
 			document.getElementById('auth-page').classList.add('hidden');

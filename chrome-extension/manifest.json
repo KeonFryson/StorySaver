@@ -18,7 +18,7 @@
 	},
 	"content_scripts": [
 		{
-			"matches": [ "https://forums.spacebattles.com/*" ],
+			"matches": [ "https://forums.spacebattles.com/threads/*" ],
 			"js": [ "content.js" ]
 		}
 	]
