@@ -560,45 +560,45 @@
 					}
 				}
 				return `
-		<div class="bg-white rounded-lg border border-gray-200 p-4 shadow-sm hover:shadow-md transition-shadow story-card" data-story-id="${story.id}">
-			<h3 class="font-semibold text-gray-900 text-lg line-clamp-2 mb-2">
-				${story.title}
-			</h3>
-			<div class="flex flex-wrap gap-2 mb-3">
-				${story.author ? `<span class="inline-block bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded">Author: ${story.author}</span>` : ''}
-				${story.authorurl ? `<a href="${story.authorurl}" target="_blank" class="inline-block bg-purple-100 text-purple-700 text-xs px-2 py-1 rounded">Author Profile</a>` : ''}
-				${story.chapter ? `<span class="inline-block bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded">Chapter: ${story.chapter}</span>` : ''}
-				${story.chapterurl ? `<a href="${story.chapterurl}" target="_blank" class="inline-block bg-green-100 text-green-700 text-xs px-2 py-1 rounded">Current Chapter Link</a>` : ''}
-			</div>
-			${story.description ? `
-				<p class="text-gray-900 text-sm mb-3 line-clamp-3">
-					${story.description}
-				</p>
-			` : ''}
-			${story.url ? `<a href="${story.url}" target="_blank" class="text-blue-600 text-xs underline break-all">Read Original</a><br/>` : ''}
-			${story.tags ? `<p class="text-xs text-gray-500 mt-1">Tags: ${story.tags}</p>` : ''}
-			${chapters.length > 0 ? `
-				<div class="mt-2">
-					<p class="text-xs font-semibold text-gray-700 mb-1">Chapters:</p>
-					<ul class="list-disc pl-5 text-xs">
-						${chapters.map(chap => `
-							<li>
-								${chap.url ? `<a href="${chap.url}" target="_blank" class="text-blue-600 underline">${chap.title}</a>` : chap.title}
-							</li>
-						`).join('')}
-					</ul>
-				</div>
-			` : ''}
-			<p class="text-xs text-gray-600 mt-3">
-				Saved on ${story.dateSaved ? new Date(story.dateSaved).toLocaleString() : (story.created_at ? new Date(story.created_at).toLocaleString() : '')}
-			</p>
-			${story.created_at ? `<p class="text-xs text-gray-400">Created: ${new Date(story.created_at).toLocaleString()}</p>` : ''}
-			<div class="flex gap-2 mt-3">
-				<button class="edit-story-btn bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600 text-xs" data-story-id="${story.id}">Edit</button>
-				<button class="remove-story-btn bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-xs" data-story-id="${story.id}">Remove</button>
-			</div>
+<div class="bg-white rounded-lg border border-gray-200 p-4 shadow-sm hover:shadow-md transition-shadow story-card" data-story-id="${story.id}">
+	<h3 class="font-semibold text-gray-900 text-lg line-clamp-2 mb-2">
+		${story.title}
+	</h3>
+	<div class="flex flex-wrap gap-2 mb-3">
+		<span class="inline-block bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded">Author: ${story.author || 'Unknown'}</span>
+		<span class="inline-block bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded">Chapter: ${story.chapter || 'N/A'}</span>
+		${story.authorurl ? `<a href="${story.authorurl}" target="_blank" class="inline-block bg-purple-100 text-purple-700 text-xs px-2 py-1 rounded">Author Profile</a>` : ''}
+		${story.chapterurl ? `<a href="${story.chapterurl}" target="_blank" class="inline-block bg-green-100 text-green-700 text-xs px-2 py-1 rounded">Current Chapter Link</a>` : ''}
+	</div>
+	${story.description ? `
+		<p class="text-gray-900 text-sm mb-3 line-clamp-3">
+			${story.description}
+		</p>
+	` : ''}
+	${story.url ? `<a href="${story.url}" target="_blank" class="text-blue-600 text-xs underline break-all">Read Original</a><br/>` : ''}
+	${story.tags ? `<p class="text-xs text-gray-500 mt-1">Tags: ${story.tags}</p>` : ''}
+	${chapters.length > 0 ? `
+		<div class="mt-2">
+			<p class="text-xs font-semibold text-gray-700 mb-1">Chapters:</p>
+			<ul class="list-disc pl-5 text-xs">
+				${chapters.map(chap => `
+					<li>
+						${chap.url ? `<a href="${chap.url}" target="_blank" class="text-blue-600 underline">${chap.title}</a>` : chap.title}
+					</li>
+				`).join('')}
+			</ul>
 		</div>
-		`;
+	` : ''}
+	<p class="text-xs text-gray-600 mt-3">
+		Saved on ${story.dateSaved ? new Date(story.dateSaved).toLocaleString() : (story.created_at ? new Date(story.created_at).toLocaleString() : '')}
+	</p>
+	${story.created_at ? `<p class="text-xs text-gray-400">Created: ${new Date(story.created_at).toLocaleString()}</p>` : ''}
+	<div class="flex gap-2 mt-3">
+		<button class="edit-story-btn bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600 text-xs" data-story-id="${story.id}">Edit</button>
+		<button class="remove-story-btn bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-xs" data-story-id="${story.id}">Remove</button>
+	</div>
+</div>
+`;
 			}).join('');
 			const darkMode = localStorage.getItem('storySaverDarkMode') === '1';
 			setDarkMode(darkMode);

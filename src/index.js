@@ -217,7 +217,7 @@ export default {
 		if (pathname === "/api/chapters" && request.method === "GET") {
 			const story_id = searchParams.get("story_id");
 			console.log(`[DEBUG] /api/chapters GET for story_id: ${story_id}`);
-			let query = `SELECT id, story_id, title, content, chapter, created_at FROM chapters`;
+			let query = `SELECT id, user_id, title, description, author, url, datesaved, chapter, chapterUrl, tags, chapters, created_at FROM stories`;
 			let params = [];
 			if (story_id) {
 				query += " WHERE story_id = ?";
