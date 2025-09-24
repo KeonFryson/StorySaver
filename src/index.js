@@ -116,35 +116,72 @@ export default {
 
 		// --- STORIES ---
 
-		// Create story: POST /api/stories { user_id, title, description }
+		// --- STORIES ---
+
+		// Create or update story: POST /api/stories { user_id, title, description, url, ... }
 		if (pathname === "/api/stories" && request.method === "POST") {
 			const body = await getJsonBody(request);
 			console.log(`[DEBUG] /api/stories POST body:`, body);
-			if (!body?.user_id || !body?.title) {
-				console.log(`[DEBUG] Missing user_id or title`);
-				return json({ error: "Missing user_id or title" }, 400);
+			if (!body?.user_id || !body?.title || !body?.url) {
+				console.log(`[DEBUG] Missing user_id, title, or url`);
+				return json({ error: "Missing user_id, title, or url" }, 400);
 			}
 			try {
-				// Replace the old INSERT with this:
-				const stmt = env.storytracker_db.prepare(
-					"INSERT INTO stories (user_id, title, description, author, url, datesaved, chapter, chapterUrl, tags, chapters) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-				);
-				await stmt.bind(
-					body.user_id,
-					body.title,
-					body.description || null,
-					body.author || null,
-					body.url || null,
-					body.datesaved || null,
-					body.chapter || null,
-					body.chapterUrl || null,
-					body.tags || null,
-					body.chapters ? JSON.stringify(body.chapters) : null
-				).run();
-				console.log(`[DEBUG] Story created for user_id: ${body.user_id}, title: ${body.title}`);
-				return json({ success: true });
+				// Check if story exists for this user and url
+				const { results } = await env.storytracker_db.prepare(
+					"SELECT id FROM stories WHERE user_id = ? AND url = ?"
+				).bind(body.user_id, body.url).all();
+
+				if (results.length > 0) {
+					// Update existing story
+					const storyId = results[0].id;
+					const stmt = env.storytracker_db.prepare(
+						`UPDATE stories SET
+					title = ?,
+					description = ?,
+					author = ?,
+					datesaved = ?,
+					chapter = ?,
+					chapterUrl = ?,
+					tags = ?,
+					chapters = ?
+				WHERE id = ?`
+					);
+					await stmt.bind(
+						body.title,
+						body.description || null,
+						body.author || null,
+						body.datesaved || null,
+						body.chapter || null,
+						body.chapterUrl || null,
+						body.tags || null,
+						body.chapters ? JSON.stringify(body.chapters) : null,
+						storyId
+					).run();
+					console.log(`[DEBUG] Story updated for user_id: ${body.user_id}, url: ${body.url}`);
+					return json({ success: true, updated: true });
+				} else {
+					// Insert new story
+					const stmt = env.storytracker_db.prepare(
+						"INSERT INTO stories (user_id, title, description, author, url, datesaved, chapter, chapterUrl, tags, chapters) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+					);
+					await stmt.bind(
+						body.user_id,
+						body.title,
+						body.description || null,
+						body.author || null,
+						body.url || null,
+						body.datesaved || null,
+						body.chapter || null,
+						body.chapterUrl || null,
+						body.tags || null,
+						body.chapters ? JSON.stringify(body.chapters) : null
+					).run();
+					console.log(`[DEBUG] Story created for user_id: ${body.user_id}, title: ${body.title}`);
+					return json({ success: true, created: true });
+				}
 			} catch (err) {
-				console.log(`[DEBUG] Error creating story:`, err);
+				console.log(`[DEBUG] Error creating/updating story:`, err);
 				return json({ error: err.message }, 400);
 			}
 		}
