@@ -212,16 +212,15 @@ export default {
 				return json({ error: err.message }, 400);
 			}
 		}
-
-		// List chapters: GET /api/chapters?story_id=#
-		if (pathname === "/api/chapters" && request.method === "GET") {
-			const story_id = searchParams.get("story_id");
-			console.log(`[DEBUG] /api/chapters GET for story_id: ${story_id}`);
-			let query = "SELECT id, user_id, title, description, author, url, datesaved, chapter, chapterUrl, tags, chapters, created_at FROM stories";
+		// List stories: GET /api/stories?user_id=#
+		if (pathname === "/api/stories" && request.method === "GET") {
+			const user_id = searchParams.get("user_id");
+			console.log(`[DEBUG] /api/stories GET for user_id: ${user_id}`);
+			let query = `SELECT id, user_id, title, description, author, authorurl, url, chapter, chapterurl, tags, chapters, datesaved, created_at FROM stories`;
 			let params = [];
-			if (story_id) {
-				query += " WHERE story_id = ?";
-				params.push(story_id);
+			if (user_id) {
+				query += " WHERE user_id = ?";
+				params.push(user_id);
 			}
 			const { results } = await env.storytracker_db.prepare(query).bind(...params).all();
 			return json(results);
