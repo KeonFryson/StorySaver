@@ -154,6 +154,15 @@
 							<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 								<div>
 									<label class="block text-sm font-medium text-gray-900 mb-2">
+										Author URL
+									</label>
+									<input id="story-author-url"
+										   type="url"
+										   class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+										   placeholder="https://authorwebsite.com" />
+								</div>
+								<div>
+									<label class="block text-sm font-medium text-gray-900 mb-2">
 										Chapter
 									</label>
 									<input id="story-chapter"
@@ -161,6 +170,8 @@
 										   class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
 										   placeholder="e.g. 1, 2, Prologue, etc." />
 								</div>
+							</div>
+							<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 								<div>
 									<label class="block text-sm font-medium text-gray-900 mb-2">
 										URL
@@ -169,6 +180,15 @@
 										   type="url"
 										   class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
 										   placeholder="https://archiveofourown.org/works/..." />
+								</div>
+								<div>
+									<label class="block text-sm font-medium text-gray-900 mb-2">
+										Chapter URL
+									</label>
+									<input id="story-chapter-url"
+										   type="url"
+										   class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+										   placeholder="https://chapterlink.com" />
 								</div>
 							</div>
 							<div>
@@ -484,9 +504,11 @@
 				description: document.getElementById('story-content').value,
 				chapter: document.getElementById('story-chapter').value,
 				author: document.getElementById('story-author').value,
+				authorurl: document.getElementById('story-author-url').value,
 				url: document.getElementById('story-url').value,
+				chapterurl: document.getElementById('story-chapter-url').value,
 				tags: document.getElementById('story-tags').value,
-				datesaved: new Date().toISOString() // <-- Add this line
+				datesaved: new Date().toISOString()
 			};
 			let res;
 			if (editingStoryId) {
@@ -515,7 +537,6 @@
 			}
 		}
 
-
 		function renderStories(stories) {
 			const storiesGrid = document.getElementById('stories-grid');
 			const emptyState = document.getElementById('empty-state');
@@ -539,44 +560,45 @@
 					}
 				}
 				return `
-	<div class="bg-white rounded-lg border border-gray-200 p-4 shadow-sm hover:shadow-md transition-shadow story-card" data-story-id="${story.id}">
-		<h3 class="font-semibold text-gray-900 text-lg line-clamp-2 mb-2">
-			${story.title}
-		</h3>
-		<div class="flex flex-wrap gap-2 mb-3">
-			${story.author ? `<span class="inline-block bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded">Author: ${story.author}</span>` : ''}
-			${story.chapter ? `<span class="inline-block bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded">Chapter: ${story.chapter}</span>` : ''}
-			${story.chapterurl ? `<a href="${story.chapterurl}" target="_blank" class="inline-block bg-green-100 text-green-700 text-xs px-2 py-1 rounded">Current Chapter Link</a>` : ''}
-		</div>
-		${story.description ? `
-			<p class="text-gray-900 text-sm mb-3 line-clamp-3">
-				${story.description}
-			</p>
-		` : ''}
-		${story.url ? `<a href="${story.url}" target="_blank" class="text-blue-600 text-xs underline break-all">Read Original</a><br/>` : ''}
-		${story.tags ? `<p class="text-xs text-gray-500 mt-1">Tags: ${story.tags}</p>` : ''}
-		${chapters.length > 0 ? `
-			<div class="mt-2">
-				<p class="text-xs font-semibold text-gray-700 mb-1">Chapters:</p>
-				<ul class="list-disc pl-5 text-xs">
-					${chapters.map(chap => `
-						<li>
-							${chap.url ? `<a href="${chap.url}" target="_blank" class="text-blue-600 underline">${chap.title}</a>` : chap.title}
-						</li>
-					`).join('')}
-				</ul>
+		<div class="bg-white rounded-lg border border-gray-200 p-4 shadow-sm hover:shadow-md transition-shadow story-card" data-story-id="${story.id}">
+			<h3 class="font-semibold text-gray-900 text-lg line-clamp-2 mb-2">
+				${story.title}
+			</h3>
+			<div class="flex flex-wrap gap-2 mb-3">
+				${story.author ? `<span class="inline-block bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded">Author: ${story.author}</span>` : ''}
+				${story.authorurl ? `<a href="${story.authorurl}" target="_blank" class="inline-block bg-purple-100 text-purple-700 text-xs px-2 py-1 rounded">Author Profile</a>` : ''}
+				${story.chapter ? `<span class="inline-block bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded">Chapter: ${story.chapter}</span>` : ''}
+				${story.chapterurl ? `<a href="${story.chapterurl}" target="_blank" class="inline-block bg-green-100 text-green-700 text-xs px-2 py-1 rounded">Current Chapter Link</a>` : ''}
 			</div>
-		` : ''}
-		<p class="text-xs text-gray-600 mt-3">
-			Saved on ${story.dateSaved ? new Date(story.dateSaved).toLocaleString() : (story.created_at ? new Date(story.created_at).toLocaleString() : '')}
-		</p>
-		${story.created_at ? `<p class="text-xs text-gray-400">Created: ${new Date(story.created_at).toLocaleString()}</p>` : ''}
-		<div class="flex gap-2 mt-3">
-			<button class="edit-story-btn bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600 text-xs" data-story-id="${story.id}">Edit</button>
-			<button class="remove-story-btn bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-xs" data-story-id="${story.id}">Remove</button>
+			${story.description ? `
+				<p class="text-gray-900 text-sm mb-3 line-clamp-3">
+					${story.description}
+				</p>
+			` : ''}
+			${story.url ? `<a href="${story.url}" target="_blank" class="text-blue-600 text-xs underline break-all">Read Original</a><br/>` : ''}
+			${story.tags ? `<p class="text-xs text-gray-500 mt-1">Tags: ${story.tags}</p>` : ''}
+			${chapters.length > 0 ? `
+				<div class="mt-2">
+					<p class="text-xs font-semibold text-gray-700 mb-1">Chapters:</p>
+					<ul class="list-disc pl-5 text-xs">
+						${chapters.map(chap => `
+							<li>
+								${chap.url ? `<a href="${chap.url}" target="_blank" class="text-blue-600 underline">${chap.title}</a>` : chap.title}
+							</li>
+						`).join('')}
+					</ul>
+				</div>
+			` : ''}
+			<p class="text-xs text-gray-600 mt-3">
+				Saved on ${story.dateSaved ? new Date(story.dateSaved).toLocaleString() : (story.created_at ? new Date(story.created_at).toLocaleString() : '')}
+			</p>
+			${story.created_at ? `<p class="text-xs text-gray-400">Created: ${new Date(story.created_at).toLocaleString()}</p>` : ''}
+			<div class="flex gap-2 mt-3">
+				<button class="edit-story-btn bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600 text-xs" data-story-id="${story.id}">Edit</button>
+				<button class="remove-story-btn bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-xs" data-story-id="${story.id}">Remove</button>
+			</div>
 		</div>
-	</div>
-	`;
+		`;
 			}).join('');
 			const darkMode = localStorage.getItem('storySaverDarkMode') === '1';
 			setDarkMode(darkMode);
@@ -604,7 +626,9 @@
 			document.getElementById('add-story-modal-backdrop').style.display = 'block';
 			document.getElementById('story-title').value = story.title || '';
 			document.getElementById('story-author').value = story.author || '';
+			document.getElementById('story-author-url').value = story.authorurl || '';
 			document.getElementById('story-chapter').value = story.chapter || '';
+			document.getElementById('story-chapter-url').value = story.chapterurl || '';
 			document.getElementById('story-url').value = story.url || '';
 			document.getElementById('story-content').value = story.description || '';
 			document.getElementById('story-tags').value = story.tags || '';
