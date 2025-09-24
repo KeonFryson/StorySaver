@@ -126,9 +126,16 @@ export default {
 			}
 			try {
 				const stmt = env.storytracker_db.prepare(
-					"INSERT INTO stories (user_id, title, description) VALUES (?, ?, ?)"
+					"INSERT INTO stories (user_id, title, description, author, url, datesaved) VALUES (?, ?, ?, ?, ?, ?)"
 				);
-				await stmt.bind(body.user_id, body.title, body.description || null).run();
+				await stmt.bind(
+					body.user_id,
+					body.title,
+					body.description || null,
+					body.author || null,
+					body.url || null,
+					body.datesaved || null
+				).run();
 				console.log(`[DEBUG] Story created for user_id: ${body.user_id}, title: ${body.title}`);
 				return json({ success: true });
 			} catch (err) {

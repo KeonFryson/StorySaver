@@ -485,7 +485,8 @@
 				chapter: document.getElementById('story-chapter').value,
 				author: document.getElementById('story-author').value,
 				url: document.getElementById('story-url').value,
-				tags: document.getElementById('story-tags').value
+				tags: document.getElementById('story-tags').value,
+				datesaved: new Date().toISOString() // <-- Add this line
 			};
 			let res;
 			if (editingStoryId) {
