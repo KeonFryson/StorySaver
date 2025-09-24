@@ -230,6 +230,7 @@
 		</div>
 	</div>
 	<script>
+		let editingStoryId = null;
 		function setDarkMode(enabled) {
 			
 			const body = document.getElementById('body-root');
@@ -509,7 +510,7 @@
 				url: document.getElementById('story-url').value,
 				chapterurl: document.getElementById('story-chapter-url').value,
 				tags: document.getElementById('story-tags').value,
-				datesaved: new Date().toISOString()
+				dateSaved: new Date().toISOString()
 			};
 			let res;
 			if (editingStoryId) {
@@ -598,11 +599,11 @@
 				});
 			});
 
-			// Make story card clickable to go to chapter URL
+			// Make story card clickable to go to main story URL
 			document.querySelectorAll('.story-card').forEach(card => {
 				const storyId = card.getAttribute('data-story-id');
 				const story = stories.find(s => s.id == storyId);
-				if (story && story.chapterurl) {
+				if (story && story.url) {
 					card.style.cursor = 'pointer';
 					card.addEventListener('click', function (e) {
 						// Prevent navigation if clicking Edit or Remove buttons
@@ -610,7 +611,7 @@
 							e.target.classList.contains('edit-story-btn') ||
 							e.target.classList.contains('remove-story-btn')
 						) return;
-						window.open(story.chapterurl, '_blank');
+						window.open(story.url, '_blank');
 					});
 				}
 			});
