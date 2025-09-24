@@ -119,6 +119,7 @@ export default {
 		// --- STORIES ---
 
 		// Create or update story: POST /api/stories { user_id, title, description, url, ... }
+		// Create or update story: POST /api/stories { user_id, title, description, url, ... }
 		if (pathname === "/api/stories" && request.method === "POST") {
 			const body = await getJsonBody(request);
 			console.log(`[DEBUG] /api/stories POST body:`, body);
@@ -127,26 +128,27 @@ export default {
 				return json({ error: "Missing user_id, title, or url" }, 400);
 			}
 			try {
-				// Check if story exists for this user and url
+				// Check if story exists for this user and title
 				const { results } = await env.storytracker_db.prepare(
-					"SELECT id FROM stories WHERE user_id = ? AND url = ?"
-				).bind(body.user_id, body.url).all();
+					"SELECT id FROM stories WHERE user_id = ? AND title = ?"
+				).bind(body.user_id, body.title).all();
 
 				if (results.length > 0) {
 					// Update existing story
 					const storyId = results[0].id;
 					const stmt = env.storytracker_db.prepare(
 						`UPDATE stories SET
-        title = ?,
-        description = ?,
-        author = ?,
-        datesaved = ?,
-        chapter = ?,
-        chapterUrl = ?,
-        tags = ?,
-        chapters = ?,
-        baseUrl = ? -- <-- add this
-    WHERE id = ?`
+					title = ?,
+					description = ?,
+					author = ?,
+					datesaved = ?,
+					chapter = ?,
+					chapterUrl = ?,
+					tags = ?,
+					chapters = ?,
+					baseUrl = ?,
+					url = ?
+				WHERE id = ?`
 					);
 					await stmt.bind(
 						body.title,
@@ -157,10 +159,11 @@ export default {
 						body.chapterUrl || null,
 						body.tags || null,
 						body.chapters ? JSON.stringify(body.chapters) : null,
-						body.baseUrl || null, // <-- add this
+						body.baseUrl || null,
+						body.url || null,
 						storyId
 					).run();
-					console.log(`[DEBUG] Story updated for user_id: ${body.user_id}, url: ${body.url}`);
+					console.log(`[DEBUG] Story updated for user_id: ${body.user_id}, title: ${body.title}`);
 					return json({ success: true, updated: true });
 				} else {
 					// Insert new story
@@ -173,7 +176,7 @@ export default {
 						body.description || null,
 						body.author || null,
 						body.url || null,
-						body.baseUrl || null, // <-- add this
+						body.baseUrl || null,
 						body.datesaved || null,
 						body.chapter || null,
 						body.chapterUrl || null,
