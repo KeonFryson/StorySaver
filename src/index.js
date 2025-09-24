@@ -125,7 +125,6 @@ export default {
 				return json({ error: "Missing user_id or title" }, 400);
 			}
 			try {
-				// Replace the old INSERT with this:
 				const stmt = env.storytracker_db.prepare(
 					"INSERT INTO stories (user_id, title, description, author, url, datesaved, chapter, chapterUrl, tags, chapters) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
 				);
@@ -153,7 +152,7 @@ export default {
 		if (pathname === "/api/stories" && request.method === "GET") {
 			const user_id = searchParams.get("user_id");
 			console.log(`[DEBUG] /api/stories GET for user_id: ${user_id}`);
-			let query = "SELECT id, user_id, title, description, created_at FROM stories";
+			let query = `SELECT id, user_id, title, description, author, authorurl, url, chapter, chapterurl, tags, chapters, datesaved, created_at FROM stories`;
 			let params = [];
 			if (user_id) {
 				query += " WHERE user_id = ?";
@@ -211,19 +210,6 @@ export default {
 				console.log(`[DEBUG] Error creating chapter:`, err);
 				return json({ error: err.message }, 400);
 			}
-		}
-		// List stories: GET /api/stories?user_id=#
-		if (pathname === "/api/stories" && request.method === "GET") {
-			const user_id = searchParams.get("user_id");
-			console.log(`[DEBUG] /api/stories GET for user_id: ${user_id}`);
-			let query = `SELECT id, user_id, title, description, author, authorurl, url, chapter, chapterurl, tags, chapters, datesaved, created_at FROM stories`;
-			let params = [];
-			if (user_id) {
-				query += " WHERE user_id = ?";
-				params.push(user_id);
-			}
-			const { results } = await env.storytracker_db.prepare(query).bind(...params).all();
-			return json(results);
 		}
 
 		// --- TRACKING ---
