@@ -139,7 +139,11 @@ document.addEventListener('DOMContentLoaded', () => {
 					url: tab.url,
 					description: response.description,
 					author: response.author,
-					chapters: response.chapters
+					chapters: response.chapters, // <-- add this
+					chapter: response.chapter,   // <-- add this
+					chapterUrl: response.chapterUrl, // <-- add this
+					tags: response.tags || "",   // <-- add this if available
+					datesaved: new Date().toISOString()
 				};
 				try {
 					const res = await fetch(`${API_BASE}/api/stories`, {
