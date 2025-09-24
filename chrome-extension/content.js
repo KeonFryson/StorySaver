@@ -42,36 +42,40 @@ function getSBPage() {
 }
 
 function saveStory() {
-	console.debug("saveStory called");
+	console.log("saveStory called");
 
 	var title = getSBTitle();
-	console.debug("Title:", title);
+	console.log("Title:", title);
 
 	var author = getSBAuthor();
-	console.debug("Author:", author);
+	console.log("Author:", author);
 
 	var description = getSBDescription();
-	console.debug("Description:", description);
+	console.log("Description:", description);
 
 	var chapters = getSBChapters();
-	console.debug("Chapters:", chapters);
-
-	var chapter = "Page " + getSBPage();
-	console.debug("Current page:", chapter);
+	console.log("Chapters:", chapters);
 
 	var url = window.location.href;
-	console.debug("Current URL:", url);
+	console.log("Current URL:", url);
 
 	var dateSaved = new Date().toISOString();
-	console.debug("Date saved:", dateSaved);
+	console.log("Date saved:", dateSaved);
 
-	const currentAnchor = window.location.hash;
-	console.debug("Current anchor:", currentAnchor);
+	const currentAnchor = window.location.hash; // e.g. #post-43477411
+	console.log("Current anchor:", currentAnchor);
 
-	let currentThreadmark = null;
+	let currentChapter = null;
 	if (currentAnchor) {
-		currentThreadmark = chapters.find(c => c.url.endsWith(currentAnchor));
-		console.debug("Threadmark match by anchor:", currentThreadmark);
+		currentChapter = chapters.find(c => c.url.endsWith(currentAnchor));
+		console.log("Current chapter match by anchor:", currentChapter);
+	}
+	// Fallback: If not found, try to match by page or use the last chapter
+	if (!currentChapter) {
+		// Try to match by page number if available
+		const pageNum = getSBPage();
+		currentChapter = chapters[parseInt(pageNum, 10) - 1] || chapters[chapters.length - 1] || null;
+		console.log("Current chapter fallback:", currentChapter);
 	}
 
 	var story = {
@@ -79,27 +83,30 @@ function saveStory() {
 		author,
 		description,
 		chapters,
-		chapter,
+		chapter: currentChapter ? currentChapter.title : "0", // <-- This sets story.chapter to current chapter
+		chapterUrl: currentChapter ? currentChapter.url : url,
 		url,
 		dateSaved,
-		currentThreadmark
+		currentThreadmark: currentChapter
 	};
-	console.debug("Story object to save:", story);
+	console.log("Story object to save:", story);
 
 	var savedStories = JSON.parse(localStorage.getItem('savedStories')) || [];
-	console.debug("Loaded savedStories:", savedStories);
+	console.log("Loaded savedStories:", savedStories);
 
 	savedStories = savedStories.filter(s => s.url !== url);
-	console.debug("Filtered savedStories:", savedStories);
+	console.log("Filtered savedStories:", savedStories);
 
 	savedStories.push(story);
-	console.debug("Updated savedStories:", savedStories);
+	console.log("Updated savedStories:", savedStories);
 
 	localStorage.setItem('savedStories', JSON.stringify(savedStories));
-	console.debug("Story saved to localStorage");
+	console.log("Story saved to localStorage");
 
-	return { title, author, description, chapters, chapter, currentThreadmark };
-} chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+	return { title, author, description, chapters, chapter: story.chapter, chapterUrl: story.chapterUrl, currentThreadmark: currentChapter };
+}
+
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 	if (request.action === "saveStory") {
 		const result = saveStory();
 		sendResponse({ success: true, ...result });
