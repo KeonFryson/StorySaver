@@ -488,6 +488,7 @@
 			}
 			const res = await fetch(`/api/stories?user_id=${encodeURIComponent(userId)}`);
 			const stories = res.ok ? await res.json() : [];
+			console.log(stories);
 			renderStories(stories);
 		}
 
