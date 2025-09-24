@@ -197,13 +197,13 @@ export default {
 			}
 			try {
 				const stmt = env.storytracker_db.prepare(
-					"INSERT INTO chapters (story_id, title, content, chapter_number) VALUES (?, ?, ?, ?)"
+					"INSERT INTO chapters (story_id, title, content, chapter) VALUES (?, ?, ?, ?)"
 				);
 				await stmt.bind(
 					body.story_id,
 					body.title,
 					body.content,
-					body.chapter_number || null
+					body.chapter || null
 				).run();
 				console.log(`[DEBUG] Chapter created for story_id: ${body.story_id}, title: ${body.title}`);
 				return json({ success: true });
