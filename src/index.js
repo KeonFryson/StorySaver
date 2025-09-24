@@ -137,15 +137,16 @@ export default {
 					const storyId = results[0].id;
 					const stmt = env.storytracker_db.prepare(
 						`UPDATE stories SET
-					title = ?,
-					description = ?,
-					author = ?,
-					datesaved = ?,
-					chapter = ?,
-					chapterUrl = ?,
-					tags = ?,
-					chapters = ?
-				WHERE id = ?`
+        title = ?,
+        description = ?,
+        author = ?,
+        datesaved = ?,
+        chapter = ?,
+        chapterUrl = ?,
+        tags = ?,
+        chapters = ?,
+        baseUrl = ? -- <-- add this
+    WHERE id = ?`
 					);
 					await stmt.bind(
 						body.title,
@@ -156,6 +157,7 @@ export default {
 						body.chapterUrl || null,
 						body.tags || null,
 						body.chapters ? JSON.stringify(body.chapters) : null,
+						body.baseUrl || null, // <-- add this
 						storyId
 					).run();
 					console.log(`[DEBUG] Story updated for user_id: ${body.user_id}, url: ${body.url}`);
@@ -163,7 +165,7 @@ export default {
 				} else {
 					// Insert new story
 					const stmt = env.storytracker_db.prepare(
-						"INSERT INTO stories (user_id, title, description, author, url, datesaved, chapter, chapterUrl, tags, chapters) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+						"INSERT INTO stories (user_id, title, description, author, url, baseUrl, datesaved, chapter, chapterUrl, tags, chapters) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
 					);
 					await stmt.bind(
 						body.user_id,
@@ -171,6 +173,7 @@ export default {
 						body.description || null,
 						body.author || null,
 						body.url || null,
+						body.baseUrl || null, // <-- add this
 						body.datesaved || null,
 						body.chapter || null,
 						body.chapterUrl || null,
@@ -190,7 +193,7 @@ export default {
 		if (pathname === "/api/stories" && request.method === "GET") {
 			const user_id = searchParams.get("user_id");
 			console.log(`[DEBUG] /api/stories GET for user_id: ${user_id}`);
-			let query = "SELECT id, user_id, title, description, author, chapter, url, datesaved, chapterUrl, tags, chapters, created_at FROM stories";
+			let query = "SELECT id, user_id, title, description, author, url, baseUrl, datesaved, chapter, chapterUrl, tags, chapters, created_at FROM stories";
 			let params = [];
 			if (user_id) {
 				query += " WHERE user_id = ?";
