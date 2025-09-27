@@ -1,5 +1,9 @@
 const API_BASE = 'https://storysaver.k-m-fryson112115.workers.dev';
 
+document.getElementById('visitWebsiteBtn').addEventListener('click', function () {
+	window.open('https://storysaver.k-m-fryson112115.workers.dev/', '_blank');
+});
+
 document.addEventListener('DOMContentLoaded', () => {
 	const authForm = document.getElementById('auth-form');
 	const toggleBtn = document.getElementById('toggle-signup');

@@ -1,11 +1,13 @@
 {
 	"manifest_version": 3,
-	"name": "Story Saver for SpaceBattles",
+	"name": "Story Saver",
 	"version": "1.0",
-	"description": "Save your reading progress on SpaceBattles threads.",
+	"description": "Save your reading progress.",
 	"permissions": [ "storage", "scripting", "activeTab" ],
 	"host_permissions": [
 		"https://forums.spacebattles.com/*",
+		"https://forums.sufficientvelocity.com/*",
+		"https://forum.questionablequesting.com/*",
 		"https://storysaver.k-m-fryson112115.workers.dev/*"
 	],
 	"action": {
@@ -18,7 +20,11 @@
 	},
 	"content_scripts": [
 		{
-			"matches": [ "https://forums.spacebattles.com/threads/*" ],
+			"matches": [
+				"https://forums.spacebattles.com/threads/*",
+				"https://forums.sufficientvelocity.com/threads/*",
+				"https://forum.questionablequesting.com/threads/*"
+			],
 			"js": [ "content.js" ]
 		}
 	]

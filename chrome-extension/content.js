@@ -1,16 +1,30 @@
-function getSBTitle() {
-	var titleEl = document.querySelector('h1.p-title-value');
-	return titleEl ? titleEl.textContent.trim() : document.title;
+// Utility: Detect site
+function getSiteType() {
+	const host = window.location.hostname;
+	if (host.includes('sufficientvelocity.com')) return 'SV';
+	if (host.includes('questionablequesting.com')) return 'QQ';
+	if (host.includes('forums.sufficientvelocity.com')) return 'SV';
+	if (host.includes('forum.questionablequesting.com')) return 'QQ';
+	return 'SB'; // Default: SpaceBattles
 }
-function getBaseThreadUrl(url) {
-	// Remove /page-... and #post-... from the URL
-	let base = url.split('/page-')[0].split('#')[0];
-	// Ensure trailing slash for consistency
-	if (!base.endsWith('/')) base += '/';
-	return base;
+
+// Title
+function getThreadTitle() {
+	const site = getSiteType();
+	if (site === 'SV' || site === 'SB') {
+		const el = document.querySelector('h1.p-title-value');
+		return el ? el.textContent.trim() : document.title;
+	}
+	if (site === 'QQ') {
+		const el = document.querySelector('h1.p-title-value');
+		return el ? el.textContent.trim() : document.title;
+	}
+	return document.title;
 }
-async function getSBAuthor() {
-	// Get the thread's base URL (without page or anchor)
+
+// Author
+async function getThreadAuthor() {
+	const site = getSiteType();
 	let threadUrl = window.location.href.split('/page-')[0].split('#')[0];
 	if (!threadUrl.endsWith('/')) threadUrl += '/';
 
@@ -19,67 +33,85 @@ async function getSBAuthor() {
 		const html = await response.text();
 		const parser = new DOMParser();
 		const doc = parser.parseFromString(html, 'text/html');
-		const authorEl = doc.querySelector('.message-user .username');
-		return authorEl ? authorEl.textContent.trim() : "";
+		if (site === 'SV' || site === 'SB' || site === 'QQ') {
+			const authorEl = doc.querySelector('.message-user .username');
+			return authorEl ? authorEl.textContent.trim() : "";
+		}
+		return "";
 	} catch (e) {
-		console.error("Failed to fetch page 1 for author:", e);
 		// Fallback: use current page's first post
-		var authorEl = document.querySelector('.message-user .username');
+		const authorEl = document.querySelector('.message-user .username');
 		return authorEl ? authorEl.textContent.trim() : "";
 	}
 }
-async function getSBDescription() {
-	// Get the thread's base URL (without page or anchor)
+
+// Description
+async function getThreadDescription() {
+	const site = getSiteType();
 	let threadUrl = window.location.href.split('/page-')[0].split('#')[0];
-	// Ensure it ends with a slash
 	if (!threadUrl.endsWith('/')) threadUrl += '/';
 
-	// Fetch page 1
 	try {
 		const response = await fetch(threadUrl);
 		const html = await response.text();
-		// Create a DOM parser
+
+		// Check if DOMParser is available
+		if (typeof DOMParser === 'undefined') {
+			console.error('DOMParser is undefined!');
+			return "";
+		}
+
 		const parser = new DOMParser();
 		const doc = parser.parseFromString(html, 'text/html');
-		// Get the first post's description
-		const descEl = doc.querySelector('.message-body .bbWrapper');
-		return descEl ? descEl.textContent.trim() : "";
+		if (site === 'SV' || site === 'SB' || site === 'QQ') {
+			const descEl = doc.querySelector('.message-body .bbWrapper');
+			return descEl ? descEl.textContent.trim() : "";
+		}
+		return "";
 	} catch (e) {
 		console.error("Failed to fetch page 1 for description:", e);
-		// Fallback: use current page's first post
-		var descEl = document.querySelector('.message-body .bbWrapper');
+		const descEl = document.querySelector('.message-body .bbWrapper');
 		return descEl ? descEl.textContent.trim() : "";
 	}
 }
 
-function getSBChapters() {
+// Chapters/Threadmarks
+function getThreadChapters() {
+	const site = getSiteType();
 	let chapters = [];
-	// Try to get threadmarks from the threadmarks block
-	document.querySelectorAll('.structItem--threadmark .structItem-title a, .structItem-title a[href*="threadmarks"]').forEach(a => {
-		chapters.push({
-			title: a.innerText.trim(),
-			url: a.href
-		});
-	});
-	// Fallback: Try to get threadmarks from the threadmarks list
-	if (chapters.length === 0) {
-		document.querySelectorAll('.message-threadmarkList .structItem-title a').forEach(a => {
+	if (site === 'SV' || site === 'SB' || site === 'QQ') {
+		document.querySelectorAll('.structItem--threadmark .structItem-title a, .structItem-title a[href*="threadmarks"]').forEach(a => {
 			chapters.push({
 				title: a.innerText.trim(),
 				url: a.href
 			});
 		});
+		if (chapters.length === 0) {
+			document.querySelectorAll('.message-threadmarkList .structItem-title a').forEach(a => {
+				chapters.push({
+					title: a.innerText.trim(),
+					url: a.href
+				});
+			});
+		}
 	}
 	return chapters;
 }
- 
+
+// Multi-page threadmarks
 async function getAllThreadmarksMultiPage(baseUrl) {
 	let allThreadmarks = [];
 	let page = 1;
 	const parser = new DOMParser();
+	const site = getSiteType();
 
 	while (true) {
-		const pageUrl = baseUrl + `threadmarks?per_page=200&page=${page}`;
+		let pageUrl;
+		if (site === 'SV' || site === 'SB' || site === 'QQ') {
+			pageUrl = baseUrl + `threadmarks?per_page=200&page=${page}`;
+		} else {
+			break;
+		}
 		const html = await fetch(pageUrl).then(r => r.text());
 		const pageDoc = parser.parseFromString(html, 'text/html');
 		const threadmarkLinks = pageDoc.querySelectorAll('.structItem--threadmark .structItem-title a');
@@ -89,14 +121,14 @@ async function getAllThreadmarksMultiPage(baseUrl) {
 				title: a.innerText.trim(),
 				url: a.href
 			}));
-		if (threadmarks.length === 0) break; // No more threadmarks, stop
+		if (threadmarks.length === 0) break;
 		allThreadmarks.push(...threadmarks);
 		page++;
 	}
 	return allThreadmarks;
 }
 
-async function getSBAllThreadmarksAndCurrentChapter() {
+async function getAllThreadmarksAndCurrentChapter() {
 	let baseUrl = window.location.href.split('/page-')[0].split('#')[0];
 	if (!baseUrl.endsWith('/')) baseUrl += '/';
 
@@ -108,9 +140,8 @@ async function getSBAllThreadmarksAndCurrentChapter() {
 	if (currentAnchor) {
 		currentChapter = threadmarks.find(tm => tm.url.endsWith(currentAnchor));
 	}
-	// Fallback: Try to match by page number if available
 	if (!currentChapter) {
-		const pageNum = getSBPage();
+		const pageNum = getPageNumber();
 		currentChapter = threadmarks[parseInt(pageNum, 10) - 1] || threadmarks[threadmarks.length - 1] || null;
 	}
 
@@ -119,91 +150,36 @@ async function getSBAllThreadmarksAndCurrentChapter() {
 		currentChapter
 	};
 }
-// This function checks and updates maxChapter for all saved stories
-async function updateAllStoriesMaxChapter() {
-    const savedStories = JSON.parse(localStorage.getItem('savedStories')) || [];
-    for (const story of savedStories) {
-        await new Promise((resolve) => {
-            chrome.tabs.create({ url: story.baseUrl, active: false }, (tab) => {
-                // Wait for tab to load, then inject content script
-                chrome.tabs.onUpdated.addListener(function listener(tabId, info) {
-                    if (tabId === tab.id && info.status === 'complete') {
-                        chrome.tabs.sendMessage(tab.id, { action: "getLatestChapters" }, (response) => {
-                            if (response && response.maxChapter > story.maxChapter) {
-                                story.maxChapter = response.maxChapter;
-                                story.chapters = response.chapters;
-                                // Optionally update other fields
-                            }
-                            chrome.tabs.remove(tab.id); // Clean up tab
-                            chrome.tabs.onUpdated.removeListener(listener);
-                            resolve();
-                        });
-                    }
-                });
-            });
-        });
-    }
-    localStorage.setItem('savedStories', JSON.stringify(savedStories));
-    alert('Stories updated!');
-}
 
-// You can trigger this function from a popup or options page
-function getSBPage() {
+function getPageNumber() {
 	var pageEl = document.querySelector('li.pageNav-page--current, .pageNav-page--current');
 	if (pageEl) return pageEl.textContent.trim();
 	var match = window.location.href.match(/page-(\d+)/);
 	return match ? match[1] : "1";
 }
 
-async function updateAllStoriesMaxChapter() {
-	const savedStories = JSON.parse(localStorage.getItem('savedStories')) || [];
-	for (const story of savedStories) {
-		await new Promise((resolve) => {
-			chrome.tabs.create({ url: story.baseUrl, active: false }, (tab) => {
-				// Wait for tab to load, then inject content script
-				chrome.tabs.onUpdated.addListener(function listener(tabId, info) {
-					if (tabId === tab.id && info.status === 'complete') {
-						chrome.tabs.sendMessage(tab.id, { action: "getLatestChapters" }, (response) => {
-							if (response && response.maxChapter > story.maxChapter) {
-								story.maxChapter = response.maxChapter;
-								story.chapters = response.chapters;
-								// Optionally update other fields
-							}
-							chrome.tabs.remove(tab.id); // Clean up tab
-							chrome.tabs.onUpdated.removeListener(listener);
-							resolve();
-						});
-					}
-				});
-			});
-		});
-	}
-	localStorage.setItem('savedStories', JSON.stringify(savedStories));
-	alert('Stories updated!');
-}
-
-
 async function saveStory() {
 	console.log("saveStory called");
 
-	var title = getSBTitle();
+	var title = getThreadTitle();
 	console.log("Title:", title);
 
-	var author = await getSBAuthor();
+	var author = await getThreadAuthor();
 	console.log("Author:", author);
 
-	var description = await getSBDescription();
+	var description = await getThreadDescription();
 	console.log("Description:", description);
 
 	var url = window.location.href;
-	var baseUrl = getBaseThreadUrl(url);
+	var baseUrl = url.split('/page-')[0].split('#')[0];
+	if (!baseUrl.endsWith('/')) baseUrl += '/';
 	console.log("Current URL:", url);
 	console.log("Base Thread URL:", baseUrl);
 
 	var dateSaved = new Date().toISOString();
 	console.log("Date saved:", dateSaved);
 
-	const { threadmarks, currentChapter } = await getSBAllThreadmarksAndCurrentChapter();
+	const { threadmarks, currentChapter } = await getAllThreadmarksAndCurrentChapter();
 	console.log("Threadmarks:", threadmarks);
 	console.log("Current chapter:", currentChapter);
 
@@ -217,7 +193,6 @@ async function saveStory() {
 	}
 	console.log("Current threadmark number:", currentThreadmarkNumber);
 
-
 	var story = {
 		title,
 		author,
@@ -226,9 +201,9 @@ async function saveStory() {
 		chapter: currentChapter ? currentChapter.title : "0",
 		chapterUrl: currentChapter ? currentChapter.url : url,
 		maxChapter,
-		currentThreadmarkNumber, // <-- Added here
-		url,      // full current URL (with page/post)
-		baseUrl,  // base thread URL (no page/post)
+		currentThreadmarkNumber,
+		url,
+		baseUrl,
 		dateSaved,
 		currentThreadmark: currentChapter
 	};
@@ -238,16 +213,14 @@ async function saveStory() {
 	var savedStories = JSON.parse(localStorage.getItem('savedStories')) || [];
 	console.log("Loaded savedStories:", savedStories);
 
-	// Match by both title and baseUrl
 	const existingIndex = savedStories.findIndex(s => s.title === title && s.baseUrl === baseUrl);
 
 	if (existingIndex !== -1) {
-		// Only update chapter, chapterUrl, url, and dateSaved for the matching story
 		savedStories[existingIndex].chapter = story.chapter;
 		savedStories[existingIndex].maxChapter = story.maxChapter;
 		savedStories[existingIndex].chapterUrl = story.chapterUrl;
 		savedStories[existingIndex].currentThreadmarkNumber = story.currentThreadmarkNumber;
-		savedStories[existingIndex].url = url; // update last read location
+		savedStories[existingIndex].url = url;
 		savedStories[existingIndex].dateSaved = dateSaved;
 		savedStories[existingIndex].currentThreadmark = story.currentThreadmark;
 		console.log("Updated chapter for existing story with same title and baseUrl.");
@@ -266,30 +239,28 @@ async function saveStory() {
 		chapters: threadmarks,
 		chapter: story.chapter,
 		maxChapter,
-		currentThreadmarkNumber, // <-- Added here
+		currentThreadmarkNumber,
 		chapterUrl: story.chapterUrl,
 		currentThreadmark: currentChapter,
 		url,
 		baseUrl
 	};
 }
+
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 	if (request.action === "saveStory") {
 		saveStory().then(result => {
 			sendResponse({ success: true, ...result });
 		});
-		return true; // Required for async sendResponse
+		return true;
 	}
 	if (request.action === "getLatestChapters") {
-		getSBAllThreadmarksAndCurrentChapter().then(({ threadmarks }) => {
+		getAllThreadmarksAndCurrentChapter().then(({ threadmarks }) => {
 			sendResponse({
 				maxChapter: threadmarks.length,
 				chapters: threadmarks
 			});
 		});
-		return true; // Required for async sendResponse
+		return true;
 	}
 });
-
-// AUTOMATE: Run chapter update every time content script loads
-updateAllStoriesMaxChapter();
