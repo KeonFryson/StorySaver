@@ -216,21 +216,22 @@
 						</form>
 					</div>
 				</div>
-				<!-- Filter Bar -->
-				<div id="stories-filter-bar" class="mb-6 flex flex-wrap gap-4 items-center">
-					<input id="filter-title" type="text" placeholder="Filter by Title" class="px-3 py-2 border border-gray-300 rounded-md bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-					<input id="filter-author" type="text" placeholder="Filter by Author" class="px-3 py-2 border border-gray-300 rounded-md bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-					<input id="filter-tags" type="text" placeholder="Filter by Tags" class="px-3 py-2 border border-gray-300 rounded-md bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-					<select id="sort-order" class="px-3 py-2 border border-gray-300 rounded-md bg-white text-gray-900 text-sm">
-						<option value="az">Title A-Z</option>
-						<option value="za">Title Z-A</option>
-					</select>
-					<input id="filter-chapter-min" type="text" placeholder="Chapter Min" class="px-3 py-2 border border-gray-300 rounded-md bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 w-24" />
-					<span>-</span>
-					<input id="filter-chapter-max" type="text" placeholder="Chapter Max" class="px-3 py-2 border border-gray-300 rounded-md bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 w-24" />
-					<button id="apply-filters" class="bg-blue-600 text-white px-3 py-2 rounded-md hover:bg-blue-700 transition-colors text-sm">Apply Filters</button>
-					<button id="clear-filters" class="bg-gray-200 text-gray-800 px-3 py-2 rounded-md hover:bg-gray-300 transition-colors text-sm">Clear Filters</button>
-					<div id="active-filters" class="text-sm text-gray-600 ml-4"></div>
+				<!-- Add this above the stories grid inside the dashboard-page -->
+				<div class="mb-6">
+					<button id="toggle-filter-btn" class="bg-gray-200 text-gray-800 px-3 py-2 rounded-md hover:bg-gray-300 transition-colors text-sm">
+						Filter Stories
+					</button>
+					<div id="stories-filter-panel" class="mt-2 p-4 bg-white border border-gray-200 rounded-lg shadow-lg hidden">
+						<label class="block mb-2 font-medium text-gray-900">Sort By:</label>
+						<select id="stories-sort-select" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-gray-900">
+							<option value="lastAddedDesc">Last Added (Newest First)</option>
+							<option value="lastAddedAsc">Last Added (Oldest First)</option>
+							<option value="lastReadDesc">Last Read (Newest First)</option>
+							<option value="lastReadAsc">Last Read (Oldest First)</option>
+							<option value="titleAZ">Title (A-Z)</option>
+							<option value="titleZA">Title (Z-A)</option>
+						</select>
+					</div>
 				</div>
 
 				<!-- Stories Grid -->
@@ -248,103 +249,6 @@
 	</div>
 	<script>
 		let editingStoryId = null;
-
-		// Filtering state
-		let allStories = [];
-		let filterTitle = '';
-		let filterAuthor = '';
-		let filterTags = '';
-		let filterChapterMin = '';
-		let filterChapterMax = '';
-		let sortOrder = 'az';
-
-		// Update loadStories to store all stories and apply filters
-		async function loadStories(userId) {
-			if (!userId) {
-				allStories = [];
-				renderStories([]);
-				return;
-			}
-			const res = await fetch(`/api/stories?user_id=${encodeURIComponent(userId)}`);
-			allStories = res.ok ? await res.json() : [];
-			applyFilters();
-		}
-
-		// Filtering logic
-		function applyFilters() {
-			const filtered = allStories.filter(story => {
-				const titleMatch = !filterTitle || (story.title && story.title.toLowerCase().includes(filterTitle));
-				const authorMatch = !filterAuthor || (story.author && story.author.toLowerCase().includes(filterAuthor));
-				const tagsMatch = !filterTags || (story.tags && story.tags.toLowerCase().includes(filterTags));
-				let chapterMatch = true;
-				const chapterVal = parseFloat(story.chapter);
-				if (filterChapterMin) {
-					chapterMatch = chapterMatch && !isNaN(chapterVal) && chapterVal >= parseFloat(filterChapterMin);
-				}
-				if (filterChapterMax) {
-					chapterMatch = chapterMatch && !isNaN(chapterVal) && chapterVal <= parseFloat(filterChapterMax);
-				}
-				return titleMatch && authorMatch && tagsMatch && chapterMatch;
-			});
-
-			// Sort by title, using empty string if title is missing
-			filtered.sort((a, b) => {
-				const titleA = (a.title || '').toLowerCase();
-				const titleB = (b.title || '').toLowerCase();
-				if (sortOrder === 'az') {
-					return titleA.localeCompare(titleB, undefined, { sensitivity: 'base' });
-				} else {
-					return titleB.localeCompare(titleA, undefined, { sensitivity: 'base' });
-				}
-			});
-
-			renderStories(filtered);
-			showActiveFilters();
-		}
-
-		function showActiveFilters() {
-			const filters = [];
-			if (filterTitle) filters.push(`Title: "${filterTitle}"`);
-			if (filterAuthor) filters.push(`Author: "${filterAuthor}"`);
-			if (filterTags) filters.push(`Tags: "${filterTags}"`);
-			if (filterChapterMin || filterChapterMax) {
-				filters.push(`Chapter: ${filterChapterMin || ''} - ${filterChapterMax || ''}`);
-			}
-			if (sortOrder === 'az') {
-				filters.push('Sort: Title A-Z');
-			} else {
-				filters.push('Sort: Title Z-A');
-			}
-			document.getElementById('active-filters').textContent = filters.length ? 'Filtering by: ' + filters.join(', ') : '';
-		}
-
-		document.getElementById('sort-order').addEventListener('change', function () {
-			sortOrder = this.value;
-			applyFilters();
-		});
-
-		document.getElementById('apply-filters').addEventListener('click', function () {
-			filterTitle = document.getElementById('filter-title').value.trim().toLowerCase();
-			filterAuthor = document.getElementById('filter-author').value.trim().toLowerCase();
-			filterTags = document.getElementById('filter-tags').value.trim().toLowerCase();
-			filterChapterMin = document.getElementById('filter-chapter-min').value.trim();
-			filterChapterMax = document.getElementById('filter-chapter-max').value.trim();
-			applyFilters();
-		});
-
-		document.getElementById('clear-filters').addEventListener('click', function () {
-			document.getElementById('filter-title').value = '';
-			document.getElementById('filter-author').value = '';
-			document.getElementById('filter-tags').value = '';
-			document.getElementById('filter-chapter-min').value = '';
-			document.getElementById('filter-chapter-max').value = '';
-			filterTitle = '';
-			filterAuthor = '';
-			filterTags = '';
-			filterChapterMin = '';
-			filterChapterMax = '';
-			applyFilters();
-		});
 
 		function setDarkMode(enabled) {
 			
@@ -484,6 +388,7 @@
 			}
 			localStorage.setItem('storySaverDarkMode', enabled ? '1' : '0');
 		}
+
 		document.addEventListener('DOMContentLoaded', function () {
 			document.getElementById('auth-page').classList.add('hidden');
 			document.getElementById('dashboard-page').classList.remove('hidden');
@@ -537,6 +442,50 @@
 			} else {
 				renderStories([]);
 			}
+		});
+
+		// Show/hide filter panel
+		document.getElementById('toggle-filter-btn').addEventListener('click', function () {
+			const panel = document.getElementById('stories-filter-panel');
+			panel.classList.toggle('hidden');
+		});
+
+		// Store current stories and sort mode
+		let currentStories = [];
+		let currentSortMode = 'lastAddedDesc';
+
+		// Add lastRead property to stories if not present (for demo, you may want to update this when a story is read)
+		function ensureLastRead(stories) {
+			return stories.map(story => ({
+				...story,
+				lastRead: story.lastRead || story.dateSaved || story.created_at || null
+			}));
+		}
+
+		// Sorting logic
+		function sortStories(stories, mode) {
+			switch (mode) {
+				case 'lastAddedDesc':
+					return [...stories].sort((a, b) => new Date(b.dateSaved || b.created_at) - new Date(a.dateSaved || a.created_at));
+				case 'lastAddedAsc':
+					return [...stories].sort((a, b) => new Date(a.dateSaved || a.created_at) - new Date(b.dateSaved || b.created_at));
+				case 'lastReadDesc':
+					return [...stories].sort((a, b) => new Date(b.lastRead) - new Date(a.lastRead));
+				case 'lastReadAsc':
+					return [...stories].sort((a, b) => new Date(a.lastRead) - new Date(b.lastRead));
+				case 'titleAZ':
+					return [...stories].sort((a, b) => (a.title || '').localeCompare(b.title || ''));
+				case 'titleZA':
+					return [...stories].sort((a, b) => (b.title || '').localeCompare(a.title || ''));
+				default:
+					return stories;
+			}
+		}
+
+		// Listen for sort changes
+		document.getElementById('stories-sort-select').addEventListener('change', function (e) {
+			currentSortMode = e.target.value;
+			renderStories(sortStories(currentStories, currentSortMode));
 		});
 
 		async function handleAuth(e) {
@@ -655,18 +604,21 @@
 		}
 
 		function renderStories(stories) {
+			currentStories = ensureLastRead(stories);
+			const sortedStories = sortStories(currentStories, currentSortMode);
+
 			const storiesGrid = document.getElementById('stories-grid');
 			const emptyState = document.getElementById('empty-state');
 			const storiesCount = document.getElementById('stories-count');
-			storiesCount.textContent = stories.length;
-			if (stories.length === 0) {
+			storiesCount.textContent = sortedStories.length;
+			if (sortedStories.length === 0) {
 				emptyState.classList.remove('hidden');
 				storiesGrid.classList.add('hidden');
 				return;
 			}
 			emptyState.classList.add('hidden');
 			storiesGrid.classList.remove('hidden');
-			storiesGrid.innerHTML = stories.map(story => {
+			storiesGrid.innerHTML = sortedStories.map(story => {
 				return `
 <div class="bg-white rounded-lg border border-gray-200 p-4 shadow-sm hover:shadow-lg hover:scale-[1.02] transition-shadow transition-transform duration-200 story-card" data-story-id="${story.id}">
 	<h3 class="font-semibold text-gray-900 text-lg line-clamp-2 mb-2">
@@ -709,7 +661,7 @@
 			document.querySelectorAll('.edit-story-btn').forEach(btn => {
 				btn.addEventListener('click', function () {
 					const storyId = this.getAttribute('data-story-id');
-					const story = stories.find(s => s.id == storyId);
+					const story = sortedStories.find(s => s.id == storyId);
 					if (story) openEditModal(story);
 				});
 			});
@@ -717,11 +669,10 @@
 			// Make story card clickable to go to main story URL
 			document.querySelectorAll('.story-card').forEach(card => {
 				const storyId = card.getAttribute('data-story-id');
-				const story = stories.find(s => s.id == storyId);
+				const story = sortedStories.find(s => s.id == storyId);
 				if (story && story.url) {
 					card.style.cursor = 'pointer';
 					card.addEventListener('click', function (e) {
-						// Prevent navigation if clicking Edit or Remove buttons
 						if (
 							e.target.classList.contains('edit-story-btn') ||
 							e.target.classList.contains('remove-story-btn')
