@@ -221,7 +221,16 @@
 					<input id="filter-title" type="text" placeholder="Filter by Title" class="px-3 py-2 border border-gray-300 rounded-md bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500" />
 					<input id="filter-author" type="text" placeholder="Filter by Author" class="px-3 py-2 border border-gray-300 rounded-md bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500" />
 					<input id="filter-tags" type="text" placeholder="Filter by Tags" class="px-3 py-2 border border-gray-300 rounded-md bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+					<select id="sort-order" class="px-3 py-2 border border-gray-300 rounded-md bg-white text-gray-900 text-sm">
+						<option value="az">Title A-Z</option>
+						<option value="za">Title Z-A</option>
+					</select>
+					<input id="filter-chapter-min" type="text" placeholder="Chapter Min" class="px-3 py-2 border border-gray-300 rounded-md bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 w-24" />
+					<span>-</span>
+					<input id="filter-chapter-max" type="text" placeholder="Chapter Max" class="px-3 py-2 border border-gray-300 rounded-md bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 w-24" />
+					<button id="apply-filters" class="bg-blue-600 text-white px-3 py-2 rounded-md hover:bg-blue-700 transition-colors text-sm">Apply Filters</button>
 					<button id="clear-filters" class="bg-gray-200 text-gray-800 px-3 py-2 rounded-md hover:bg-gray-300 transition-colors text-sm">Clear Filters</button>
+					<div id="active-filters" class="text-sm text-gray-600 ml-4"></div>
 				</div>
 
 				<!-- Stories Grid -->
@@ -245,6 +254,9 @@
 		let filterTitle = '';
 		let filterAuthor = '';
 		let filterTags = '';
+		let filterChapterMin = '';
+		let filterChapterMax = '';
+		let sortOrder = 'az';
 
 		// Update loadStories to store all stories and apply filters
 		async function loadStories(userId) {
@@ -264,10 +276,75 @@
 				const titleMatch = !filterTitle || (story.title && story.title.toLowerCase().includes(filterTitle));
 				const authorMatch = !filterAuthor || (story.author && story.author.toLowerCase().includes(filterAuthor));
 				const tagsMatch = !filterTags || (story.tags && story.tags.toLowerCase().includes(filterTags));
-				return titleMatch && authorMatch && tagsMatch;
+				let chapterMatch = true;
+				const chapterVal = parseFloat(story.chapter);
+				if (filterChapterMin) {
+					chapterMatch = chapterMatch && !isNaN(chapterVal) && chapterVal >= parseFloat(filterChapterMin);
+				}
+				if (filterChapterMax) {
+					chapterMatch = chapterMatch && !isNaN(chapterVal) && chapterVal <= parseFloat(filterChapterMax);
+				}
+				return titleMatch && authorMatch && tagsMatch && chapterMatch;
 			});
+
+			// Sort by title
+			filtered.sort((a, b) => {
+				if (!a.title) return 1;
+				if (!b.title) return -1;
+				if (sortOrder === 'az') {
+					return a.title.localeCompare(b.title, undefined, { sensitivity: 'base' });
+				} else {
+					return b.title.localeCompare(a.title, undefined, { sensitivity: 'base' });
+				}
+			});
+
 			renderStories(filtered);
+			showActiveFilters();
 		}
+
+		function showActiveFilters() {
+			const filters = [];
+			if (filterTitle) filters.push(`Title: "${filterTitle}"`);
+			if (filterAuthor) filters.push(`Author: "${filterAuthor}"`);
+			if (filterTags) filters.push(`Tags: "${filterTags}"`);
+			if (filterChapterMin || filterChapterMax) {
+				filters.push(`Chapter: ${filterChapterMin || ''} - ${filterChapterMax || ''}`);
+			}
+			if (sortOrder === 'az') {
+				filters.push('Sort: Title A-Z');
+			} else {
+				filters.push('Sort: Title Z-A');
+			}
+			document.getElementById('active-filters').textContent = filters.length ? 'Filtering by: ' + filters.join(', ') : '';
+		}
+
+		document.getElementById('sort-order').addEventListener('change', function () {
+			sortOrder = this.value;
+			applyFilters();
+		});
+
+		document.getElementById('apply-filters').addEventListener('click', function () {
+			filterTitle = document.getElementById('filter-title').value.trim().toLowerCase();
+			filterAuthor = document.getElementById('filter-author').value.trim().toLowerCase();
+			filterTags = document.getElementById('filter-tags').value.trim().toLowerCase();
+			filterChapterMin = document.getElementById('filter-chapter-min').value.trim();
+			filterChapterMax = document.getElementById('filter-chapter-max').value.trim();
+			applyFilters();
+		});
+
+		document.getElementById('clear-filters').addEventListener('click', function () {
+			document.getElementById('filter-title').value = '';
+			document.getElementById('filter-author').value = '';
+			document.getElementById('filter-tags').value = '';
+			document.getElementById('filter-chapter-min').value = '';
+			document.getElementById('filter-chapter-max').value = '';
+			filterTitle = '';
+			filterAuthor = '';
+			filterTags = '';
+			filterChapterMin = '';
+			filterChapterMax = '';
+			applyFilters();
+		});
 
 		function setDarkMode(enabled) {
 			
