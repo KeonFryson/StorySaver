@@ -84,12 +84,14 @@ async function getSBAllThreadmarksAndCurrentChapter() {
 		const parser = new DOMParser();
 		const doc = parser.parseFromString(html, 'text/html');
 
-		// Parse all threadmarks
+		// Parse all threadmarks, filtering out any awards links
 		const threadmarkLinks = doc.querySelectorAll('.structItem--threadmark .structItem-title a');
-		const threadmarks = Array.from(threadmarkLinks).map(a => ({
-			title: a.innerText.trim(),
-			url: a.href
-		}));
+		const threadmarks = Array.from(threadmarkLinks)
+			.filter(a => !a.href.includes('/awards/award/')) // <-- Exclude any award links
+			.map(a => ({
+				title: a.innerText.trim(),
+				url: a.href
+			}));
 
 		// Find current chapter by anchor
 		const currentAnchor = window.location.hash; // e.g. #post-72669933
@@ -147,6 +149,7 @@ async function saveStory() {
 	console.log("Current chapter:", currentChapter);
 
 	var maxChapter = threadmarks.length;
+	console.log("Max chapter number:", maxChapter);
 
 	var story = {
 		title,
