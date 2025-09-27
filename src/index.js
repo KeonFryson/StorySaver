@@ -143,6 +143,7 @@ export default {
 					author = ?,
 					datesaved = ?,
 					chapter = ?,
+					maxChapter = ?,
 					chapterUrl = ?,
 					tags = ?,
 					chapters = ?,
@@ -156,6 +157,7 @@ export default {
 						body.author || null,
 						body.datesaved || null,
 						body.chapter || null,
+						body.maxChapter || null,
 						body.chapterUrl || null,
 						body.tags || null,
 						body.chapters ? JSON.stringify(body.chapters) : null,
@@ -168,7 +170,7 @@ export default {
 				} else {
 					// Insert new story
 					const stmt = env.storytracker_db.prepare(
-						"INSERT INTO stories (user_id, title, description, author, url, baseUrl, datesaved, chapter, chapterUrl, tags, chapters) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+						"INSERT INTO stories (user_id, title, description, author, url, baseUrl, datesaved, chapter, maxChapter, chapterUrl, tags, chapters) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
 					);
 					await stmt.bind(
 						body.user_id,
@@ -179,6 +181,7 @@ export default {
 						body.baseUrl || null,
 						body.datesaved || null,
 						body.chapter || null,
+						body.maxChapter || null,
 						body.chapterUrl || null,
 						body.tags || null,
 						body.chapters ? JSON.stringify(body.chapters) : null
@@ -196,7 +199,7 @@ export default {
 		if (pathname === "/api/stories" && request.method === "GET") {
 			const user_id = searchParams.get("user_id");
 			console.log(`[DEBUG] /api/stories GET for user_id: ${user_id}`);
-			let query = "SELECT id, user_id, title, description, author, url, baseUrl, datesaved, chapter, chapterUrl, tags, chapters, created_at FROM stories";
+			let query = "SELECT id, user_id, title, description, author, url, baseUrl, datesaved, chapter, maxChapter, chapterUrl, tags, chapters, created_at FROM stories";
 			let params = [];
 			if (user_id) {
 				query += " WHERE user_id = ?";

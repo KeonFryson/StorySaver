@@ -146,6 +146,8 @@ async function saveStory() {
 	console.log("Threadmarks:", threadmarks);
 	console.log("Current chapter:", currentChapter);
 
+	var maxChapter = threadmarks.length;
+
 	var story = {
 		title,
 		author,
@@ -153,6 +155,7 @@ async function saveStory() {
 		chapters: threadmarks,
 		chapter: currentChapter ? currentChapter.title : "0",
 		chapterUrl: currentChapter ? currentChapter.url : url,
+		maxChapter,
 		url,      // full current URL (with page/post)
 		baseUrl,  // base thread URL (no page/post)
 		dateSaved,
@@ -169,6 +172,7 @@ async function saveStory() {
 	if (existingIndex !== -1) {
 		// Only update chapter, chapterUrl, url, and dateSaved for the matching story
 		savedStories[existingIndex].chapter = story.chapter;
+		savedStories[existingIndex].maxChapter = story.maxChapter;
 		savedStories[existingIndex].chapterUrl = story.chapterUrl;
 		savedStories[existingIndex].url = url; // update last read location
 		savedStories[existingIndex].dateSaved = dateSaved;
@@ -182,7 +186,18 @@ async function saveStory() {
 	localStorage.setItem('savedStories', JSON.stringify(savedStories));
 	console.log("Story saved to localStorage");
 
-	return { title, author, description, chapters: threadmarks, chapter: story.chapter, chapterUrl: story.chapterUrl, currentThreadmark: currentChapter, url, baseUrl };
+	return {
+		title,
+		author,
+		description,
+		chapters: threadmarks,
+		chapter: story.chapter,
+		maxChapter, // <-- Added here
+		chapterUrl: story.chapterUrl,
+		currentThreadmark: currentChapter,
+		url,
+		baseUrl
+	};
 }
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {

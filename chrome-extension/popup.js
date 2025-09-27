@@ -139,10 +139,11 @@ document.addEventListener('DOMContentLoaded', () => {
 					url: tab.url,
 					description: response.description,
 					author: response.author,
-					chapters: response.chapters, // <-- add this
-					chapter: response.chapter,   // <-- add this
-					chapterUrl: response.chapterUrl, // <-- add this
-					tags: response.tags || "",   // <-- add this if available
+					chapters: response.chapters,
+					chapter: response.chapter,
+					maxChapter: response.maxChapter, // <-- Added line
+					chapterUrl: response.chapterUrl,
+					tags: response.tags || "",
 					datesaved: new Date().toISOString()
 				};
 				try {

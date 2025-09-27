@@ -170,6 +170,15 @@
 										   class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
 										   placeholder="e.g. 1, 2, Prologue, etc." />
 								</div>
+								<div>
+									<label class="block text-sm font-medium text-gray-900 mb-2">
+										Max Chapter
+									</label>
+									<input id="story-max-chapter"
+										   type="text"
+										   class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+										   placeholder="e.g. 10, 25, Epilogue, etc." />
+								</div>
 							</div>
 							<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 								<div>
@@ -596,6 +605,7 @@
 				title: document.getElementById('story-title').value,
 				description: document.getElementById('story-content').value,
 				chapter: document.getElementById('story-chapter').value,
+				maxChapter: document.getElementById('story-max-chapter').value,
 				author: document.getElementById('story-author').value,
 				authorurl: document.getElementById('story-author-url').value,
 				url: document.getElementById('story-url').value,
@@ -650,7 +660,9 @@
 	</h3>
 	<div class="flex flex-wrap gap-2 mb-3">
 		<span class="inline-block bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded">Author: ${story.author || 'Unknown'}</span>
-		<span class="inline-block bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded">Chapter: ${story.chapter || 'N/A'}</span>
+		<span class="inline-block bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded">
+			Chapter: ${story.chapter || 'N/A'} / ${story.maxChapter || 'N/A'}
+		</span>
 		${story.authorurl ? `<a href="${story.authorurl}" target="_blank" class="inline-block bg-purple-100 text-purple-700 text-xs px-2 py-1 rounded">Author Profile</a>` : ''}
 		${story.chapterurl ? `<a href="${story.chapterurl}" target="_blank" class="inline-block bg-green-100 text-green-700 text-xs px-2 py-1 rounded">Current Chapter Link</a>` : ''}
 	</div>
@@ -715,6 +727,7 @@
 			document.getElementById('story-author').value = story.author || '';
 			document.getElementById('story-author-url').value = story.authorurl || '';
 			document.getElementById('story-chapter').value = story.chapter || '';
+			document.getElementById('story-max-chapter').value = story.maxChapter || '';
 			document.getElementById('story-chapter-url').value = story.chapterurl || '';
 			document.getElementById('story-url').value = story.url || '';
 			document.getElementById('story-content').value = story.description || '';
