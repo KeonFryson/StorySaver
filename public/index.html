@@ -663,7 +663,7 @@
 		<span class="inline-block bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded">
 			Chapter: ${
 					story.currentThreadmarkNumber && story.maxChapter
-						? `${story.currentThreadmarkNumber} / ${story.maxChapter}`
+						? `${parseInt(story.currentThreadmarkNumber, 10)} / ${parseInt(story.maxChapter, 10)}`
 						: (story.chapter || 'N/A')
 			}
 		</span>
