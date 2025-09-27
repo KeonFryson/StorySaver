@@ -287,14 +287,14 @@
 				return titleMatch && authorMatch && tagsMatch && chapterMatch;
 			});
 
-			// Sort by title
+			// Sort by title, using empty string if title is missing
 			filtered.sort((a, b) => {
-				if (!a.title) return 1;
-				if (!b.title) return -1;
+				const titleA = (a.title || '').toLowerCase();
+				const titleB = (b.title || '').toLowerCase();
 				if (sortOrder === 'az') {
-					return a.title.localeCompare(b.title, undefined, { sensitivity: 'base' });
+					return titleA.localeCompare(titleB, undefined, { sensitivity: 'base' });
 				} else {
-					return b.title.localeCompare(a.title, undefined, { sensitivity: 'base' });
+					return titleB.localeCompare(titleA, undefined, { sensitivity: 'base' });
 				}
 			});
 
