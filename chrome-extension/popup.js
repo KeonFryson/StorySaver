@@ -141,6 +141,7 @@ document.addEventListener('DOMContentLoaded', () => {
 					author: response.author,
 					chapters: response.chapters,
 					chapter: response.chapter,
+					currentThreadmarkNumber: response.currentThreadmarkNumber,
 					maxChapter: response.maxChapter, // <-- Added line
 					chapterUrl: response.chapterUrl,
 					tags: response.tags || "",

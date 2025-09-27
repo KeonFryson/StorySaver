@@ -72,51 +72,54 @@ function getSBChapters() {
 	}
 	return chapters;
 }
-async function getSBAllThreadmarksAndCurrentChapter() {
-	// Build threadmarks URL
-	let baseUrl = window.location.href.split('/page-')[0].split('#')[0];
-	if (!baseUrl.endsWith('/')) baseUrl += '/';
-	const threadmarksUrl = baseUrl + 'threadmarks?per_page=200';
+ 
+async function getAllThreadmarksMultiPage(baseUrl) {
+	let allThreadmarks = [];
+	let page = 1;
+	const parser = new DOMParser();
 
-	try {
-		const response = await fetch(threadmarksUrl);
-		const html = await response.text();
-		const parser = new DOMParser();
-		const doc = parser.parseFromString(html, 'text/html');
-
-		// Parse all threadmarks, filtering out any awards links
-		const threadmarkLinks = doc.querySelectorAll('.structItem--threadmark .structItem-title a');
+	while (true) {
+		const pageUrl = baseUrl + `threadmarks?per_page=200&page=${page}`;
+		const html = await fetch(pageUrl).then(r => r.text());
+		const pageDoc = parser.parseFromString(html, 'text/html');
+		const threadmarkLinks = pageDoc.querySelectorAll('.structItem--threadmark .structItem-title a');
 		const threadmarks = Array.from(threadmarkLinks)
-			.filter(a => !a.href.includes('/awards/award/')) // <-- Exclude any award links
+			.filter(a => !a.href.includes('/awards/award/'))
 			.map(a => ({
 				title: a.innerText.trim(),
 				url: a.href
 			}));
-
-		// Find current chapter by anchor
-		const currentAnchor = window.location.hash; // e.g. #post-72669933
-		let currentChapter = null;
-		if (currentAnchor) {
-			currentChapter = threadmarks.find(tm => tm.url.endsWith(currentAnchor));
-		}
-		// Fallback: Try to match by page number if available
-		if (!currentChapter) {
-			const pageNum = getSBPage();
-			currentChapter = threadmarks[parseInt(pageNum, 10) - 1] || threadmarks[threadmarks.length - 1] || null;
-		}
-
-		return {
-			threadmarks,
-			currentChapter
-		};
-	} catch (e) {
-		console.error("Failed to fetch threadmarks:", e);
-		return {
-			threadmarks: [],
-			currentChapter: null
-		};
+		if (threadmarks.length === 0) break; // No more threadmarks, stop
+		allThreadmarks.push(...threadmarks);
+		page++;
 	}
+	return allThreadmarks;
 }
+
+async function getSBAllThreadmarksAndCurrentChapter() {
+	let baseUrl = window.location.href.split('/page-')[0].split('#')[0];
+	if (!baseUrl.endsWith('/')) baseUrl += '/';
+
+	const threadmarks = await getAllThreadmarksMultiPage(baseUrl);
+
+	// Find current chapter by anchor
+	const currentAnchor = window.location.hash;
+	let currentChapter = null;
+	if (currentAnchor) {
+		currentChapter = threadmarks.find(tm => tm.url.endsWith(currentAnchor));
+	}
+	// Fallback: Try to match by page number if available
+	if (!currentChapter) {
+		const pageNum = getSBPage();
+		currentChapter = threadmarks[parseInt(pageNum, 10) - 1] || threadmarks[threadmarks.length - 1] || null;
+	}
+
+	return {
+		threadmarks,
+		currentChapter
+	};
+}
+
 function getSBPage() {
 	var pageEl = document.querySelector('li.pageNav-page--current, .pageNav-page--current');
 	if (pageEl) return pageEl.textContent.trim();
@@ -151,6 +154,14 @@ async function saveStory() {
 	var maxChapter = threadmarks.length;
 	console.log("Max chapter number:", maxChapter);
 
+	let currentThreadmarkNumber = null;
+	if (currentChapter) {
+		const idx = threadmarks.findIndex(tm => tm.url === currentChapter.url);
+		currentThreadmarkNumber = idx !== -1 ? idx + 1 : null;
+	}
+	console.log("Current threadmark number:", currentThreadmarkNumber);
+
+
 	var story = {
 		title,
 		author,
@@ -159,11 +170,13 @@ async function saveStory() {
 		chapter: currentChapter ? currentChapter.title : "0",
 		chapterUrl: currentChapter ? currentChapter.url : url,
 		maxChapter,
+		currentThreadmarkNumber, // <-- Added here
 		url,      // full current URL (with page/post)
 		baseUrl,  // base thread URL (no page/post)
 		dateSaved,
 		currentThreadmark: currentChapter
 	};
+
 	console.log("Story object to save:", story);
 
 	var savedStories = JSON.parse(localStorage.getItem('savedStories')) || [];
@@ -177,6 +190,7 @@ async function saveStory() {
 		savedStories[existingIndex].chapter = story.chapter;
 		savedStories[existingIndex].maxChapter = story.maxChapter;
 		savedStories[existingIndex].chapterUrl = story.chapterUrl;
+		savedStories[existingIndex].currentThreadmarkNumber = story.currentThreadmarkNumber;
 		savedStories[existingIndex].url = url; // update last read location
 		savedStories[existingIndex].dateSaved = dateSaved;
 		savedStories[existingIndex].currentThreadmark = story.currentThreadmark;
@@ -195,7 +209,8 @@ async function saveStory() {
 		description,
 		chapters: threadmarks,
 		chapter: story.chapter,
-		maxChapter, // <-- Added here
+		maxChapter,
+		currentThreadmarkNumber, // <-- Added here
 		chapterUrl: story.chapterUrl,
 		currentThreadmark: currentChapter,
 		url,

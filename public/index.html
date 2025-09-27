@@ -661,7 +661,11 @@
 	<div class="flex flex-wrap gap-2 mb-3">
 		<span class="inline-block bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded">Author: ${story.author || 'Unknown'}</span>
 		<span class="inline-block bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded">
-			Chapter: ${story.chapter || 'N/A'} / ${story.maxChapter || 'N/A'}
+			Chapter: ${
+					story.currentThreadmarkNumber && story.maxChapter
+						? `${story.currentThreadmarkNumber} / ${story.maxChapter}`
+						: (story.chapter || 'N/A')
+			}
 		</span>
 		${story.authorurl ? `<a href="${story.authorurl}" target="_blank" class="inline-block bg-purple-100 text-purple-700 text-xs px-2 py-1 rounded">Author Profile</a>` : ''}
 		${story.chapterurl ? `<a href="${story.chapterurl}" target="_blank" class="inline-block bg-green-100 text-green-700 text-xs px-2 py-1 rounded">Current Chapter Link</a>` : ''}

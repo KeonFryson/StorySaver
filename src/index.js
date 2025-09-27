@@ -148,7 +148,8 @@ export default {
 					tags = ?,
 					chapters = ?,
 					baseUrl = ?,
-					url = ?
+					url = ?,
+					currentThreadmarkNumber = ?
 				WHERE id = ?`
 					);
 					await stmt.bind(
@@ -163,6 +164,7 @@ export default {
 						body.chapters ? JSON.stringify(body.chapters) : null,
 						body.baseUrl || null,
 						body.url || null,
+						body.currentThreadmarkNumber || null,
 						storyId
 					).run();
 					console.log(`[DEBUG] Story updated for user_id: ${body.user_id}, title: ${body.title}`);
@@ -170,7 +172,7 @@ export default {
 				} else {
 					// Insert new story
 					const stmt = env.storytracker_db.prepare(
-						"INSERT INTO stories (user_id, title, description, author, url, baseUrl, datesaved, chapter, maxChapter, chapterUrl, tags, chapters) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+						"INSERT INTO stories (user_id, title, description, author, url, baseUrl, datesaved, chapter, maxChapter, chapterUrl, tags, chapters, currentThreadmarkNumber) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
 					);
 					await stmt.bind(
 						body.user_id,
@@ -184,7 +186,8 @@ export default {
 						body.maxChapter || null,
 						body.chapterUrl || null,
 						body.tags || null,
-						body.chapters ? JSON.stringify(body.chapters) : null
+						body.chapters ? JSON.stringify(body.chapters) : null,
+						body.currentThreadmarkNumber || null
 					).run();
 					console.log(`[DEBUG] Story created for user_id: ${body.user_id}, title: ${body.title}`);
 					return json({ success: true, created: true });
@@ -199,7 +202,7 @@ export default {
 		if (pathname === "/api/stories" && request.method === "GET") {
 			const user_id = searchParams.get("user_id");
 			console.log(`[DEBUG] /api/stories GET for user_id: ${user_id}`);
-			let query = "SELECT id, user_id, title, description, author, url, baseUrl, datesaved, chapter, maxChapter, chapterUrl, tags, chapters, created_at FROM stories";
+			let query = "SELECT id, user_id, title, description, author, url, baseUrl, datesaved, chapter, maxChapter, chapterUrl, tags, chapters, currentThreadmarkNumber, created_at FROM stories";
 			let params = [];
 			if (user_id) {
 				query += " WHERE user_id = ?";
