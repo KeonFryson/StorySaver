@@ -232,6 +232,14 @@
 						</select>
 					</div>
 				</div>
+				<!-- Place this search input above the stories grid, ideally near the filter button -->
+				<div class="mb-4 flex items-center gap-2">
+					<input type="text"
+						   id="story-search-input"
+						   class="w-full md:w-1/2 px-3 py-2 border border-gray-300 rounded-md bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+						   placeholder="Search stories by title..."
+						   autocomplete="off" />
+				</div>
 
 				<!-- Stories Grid -->
 				<div>
@@ -248,6 +256,7 @@
 	</div>
 	<script>
 		let editingStoryId = null;
+		let currentSearchTerm = "";
 
 		function setDarkMode(enabled) {
 			
@@ -388,6 +397,8 @@
 			localStorage.setItem('storySaverDarkMode', enabled ? '1' : '0');
 		}
 
+
+
 		document.addEventListener('DOMContentLoaded', function () {
 			document.getElementById('auth-page').classList.add('hidden');
 			document.getElementById('dashboard-page').classList.remove('hidden');
@@ -441,6 +452,30 @@
 			} else {
 				renderStories([]);
 			}
+		});
+
+		// Helper to filter and sort stories
+		function filterAndRenderStories() {
+			let filtered = currentStories;
+			if (currentSearchTerm) {
+				filtered = filtered.filter(story =>
+					(story.title || "").toLowerCase().includes(currentSearchTerm)
+				);
+			}
+			const sorted = sortStories(filtered, currentSortMode);
+			renderStories(sorted);
+		}
+
+		// Listen for input changes
+		document.getElementById('story-search-input').addEventListener('input', function (e) {
+			currentSearchTerm = e.target.value.trim().toLowerCase();
+			filterAndRenderStories();
+		});
+
+		// Update sort dropdown listener to use filterAndRenderStories
+		document.getElementById('stories-sort-select').addEventListener('change', function (e) {
+			currentSortMode = e.target.value;
+			filterAndRenderStories();
 		});
 
 		// Show/hide filter panel
@@ -539,13 +574,14 @@
 
 		async function loadStories(userId) {
 			if (!userId) {
-				renderStories([]);
+				currentStories = [];
+				filterAndRenderStories();
 				return;
 			}
 			const res = await fetch(`/api/stories?user_id=${encodeURIComponent(userId)}`);
-			const stories = res.ok ? await res.json() : [];
-			console.log(stories);
-			renderStories(stories);
+			currentStories = res.ok ? await res.json() : [];
+			console.log(currentStories);
+			filterAndRenderStories();
 		}
 
 		async function handleSaveStory(e) {
@@ -595,21 +631,18 @@
 		}
 
 		function renderStories(stories) {
-			currentStories = stories;
-			const sortedStories = sortStories(currentStories, currentSortMode);
-
 			const storiesGrid = document.getElementById('stories-grid');
 			const emptyState = document.getElementById('empty-state');
 			const storiesCount = document.getElementById('stories-count');
-			storiesCount.textContent = sortedStories.length;
-			if (sortedStories.length === 0) {
+			storiesCount.textContent = stories.length;
+			if (stories.length === 0) {
 				emptyState.classList.remove('hidden');
 				storiesGrid.classList.add('hidden');
 				return;
 			}
 			emptyState.classList.add('hidden');
 			storiesGrid.classList.remove('hidden');
-			storiesGrid.innerHTML = sortedStories.map(story => {
+			storiesGrid.innerHTML = stories.map(story => {
 				return `
 <div class="bg-white rounded-lg border border-gray-200 p-4 shadow-sm hover:shadow-lg hover:scale-[1.02] transition-shadow transition-transform duration-200 story-card" data-story-id="${story.id}">
 	<h3 class="font-semibold text-gray-900 text-lg line-clamp-2 mb-2">
@@ -652,7 +685,7 @@
 			document.querySelectorAll('.edit-story-btn').forEach(btn => {
 				btn.addEventListener('click', function () {
 					const storyId = this.getAttribute('data-story-id');
-					const story = sortedStories.find(s => s.id == storyId);
+					const story = stories.find(s => s.id == storyId);
 					if (story) openEditModal(story);
 				});
 			});
@@ -660,7 +693,7 @@
 			// Make story card clickable to go to main story URL
 			document.querySelectorAll('.story-card').forEach(card => {
 				const storyId = card.getAttribute('data-story-id');
-				const story = sortedStories.find(s => s.id == storyId);
+				const story = stories.find(s => s.id == storyId);
 				if (story && story.url) {
 					card.style.cursor = 'pointer';
 					card.addEventListener('click', function (e) {
