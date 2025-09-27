@@ -223,11 +223,10 @@
 					</button>
 					<div id="stories-filter-panel" class="mt-2 p-4 bg-white border border-gray-200 rounded-lg shadow-lg hidden">
 						<label class="block mb-2 font-medium text-gray-900">Sort By:</label>
+						<!-- Remove the lastRead options from the filter dropdown -->
 						<select id="stories-sort-select" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-gray-900">
 							<option value="lastAddedDesc">Last Added (Newest First)</option>
 							<option value="lastAddedAsc">Last Added (Oldest First)</option>
-							<option value="lastReadDesc">Last Read (Newest First)</option>
-							<option value="lastReadAsc">Last Read (Oldest First)</option>
 							<option value="titleAZ">Title (A-Z)</option>
 							<option value="titleZA">Title (Z-A)</option>
 						</select>
@@ -455,12 +454,7 @@
 		let currentSortMode = 'lastAddedDesc';
 
 		// Add lastRead property to stories if not present (for demo, you may want to update this when a story is read)
-		function ensureLastRead(stories) {
-			return stories.map(story => ({
-				...story,
-				lastRead: story.lastRead || story.dateSaved || story.created_at || null
-			}));
-		}
+	
 
 		// Sorting logic
 		function sortStories(stories, mode) {
@@ -469,10 +463,6 @@
 					return [...stories].sort((a, b) => new Date(b.dateSaved || b.created_at) - new Date(a.dateSaved || a.created_at));
 				case 'lastAddedAsc':
 					return [...stories].sort((a, b) => new Date(a.dateSaved || a.created_at) - new Date(b.dateSaved || b.created_at));
-				case 'lastReadDesc':
-					return [...stories].sort((a, b) => new Date(b.lastRead) - new Date(a.lastRead));
-				case 'lastReadAsc':
-					return [...stories].sort((a, b) => new Date(a.lastRead) - new Date(b.lastRead));
 				case 'titleAZ':
 					return [...stories].sort((a, b) => (a.title || '').localeCompare(b.title || ''));
 				case 'titleZA':
@@ -481,6 +471,7 @@
 					return stories;
 			}
 		}
+
 
 		// Listen for sort changes
 		document.getElementById('stories-sort-select').addEventListener('change', function (e) {
@@ -604,7 +595,7 @@
 		}
 
 		function renderStories(stories) {
-			currentStories = ensureLastRead(stories);
+			currentStories = stories;
 			const sortedStories = sortStories(currentStories, currentSortMode);
 
 			const storiesGrid = document.getElementById('stories-grid');
