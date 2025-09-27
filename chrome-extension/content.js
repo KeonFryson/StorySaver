@@ -119,13 +119,69 @@ async function getSBAllThreadmarksAndCurrentChapter() {
 		currentChapter
 	};
 }
+// This function checks and updates maxChapter for all saved stories
+async function updateAllStoriesMaxChapter() {
+    const savedStories = JSON.parse(localStorage.getItem('savedStories')) || [];
+    for (const story of savedStories) {
+        await new Promise((resolve) => {
+            chrome.tabs.create({ url: story.baseUrl, active: false }, (tab) => {
+                // Wait for tab to load, then inject content script
+                chrome.tabs.onUpdated.addListener(function listener(tabId, info) {
+                    if (tabId === tab.id && info.status === 'complete') {
+                        chrome.tabs.sendMessage(tab.id, { action: "getLatestChapters" }, (response) => {
+                            if (response && response.maxChapter > story.maxChapter) {
+                                story.maxChapter = response.maxChapter;
+                                story.chapters = response.chapters;
+                                // Optionally update other fields
+                            }
+                            chrome.tabs.remove(tab.id); // Clean up tab
+                            chrome.tabs.onUpdated.removeListener(listener);
+                            resolve();
+                        });
+                    }
+                });
+            });
+        });
+    }
+    localStorage.setItem('savedStories', JSON.stringify(savedStories));
+    alert('Stories updated!');
+}
 
+// You can trigger this function from a popup or options page
 function getSBPage() {
 	var pageEl = document.querySelector('li.pageNav-page--current, .pageNav-page--current');
 	if (pageEl) return pageEl.textContent.trim();
 	var match = window.location.href.match(/page-(\d+)/);
 	return match ? match[1] : "1";
 }
+
+async function updateAllStoriesMaxChapter() {
+	const savedStories = JSON.parse(localStorage.getItem('savedStories')) || [];
+	for (const story of savedStories) {
+		await new Promise((resolve) => {
+			chrome.tabs.create({ url: story.baseUrl, active: false }, (tab) => {
+				// Wait for tab to load, then inject content script
+				chrome.tabs.onUpdated.addListener(function listener(tabId, info) {
+					if (tabId === tab.id && info.status === 'complete') {
+						chrome.tabs.sendMessage(tab.id, { action: "getLatestChapters" }, (response) => {
+							if (response && response.maxChapter > story.maxChapter) {
+								story.maxChapter = response.maxChapter;
+								story.chapters = response.chapters;
+								// Optionally update other fields
+							}
+							chrome.tabs.remove(tab.id); // Clean up tab
+							chrome.tabs.onUpdated.removeListener(listener);
+							resolve();
+						});
+					}
+				});
+			});
+		});
+	}
+	localStorage.setItem('savedStories', JSON.stringify(savedStories));
+	alert('Stories updated!');
+}
+
 
 async function saveStory() {
 	console.log("saveStory called");
@@ -217,7 +273,6 @@ async function saveStory() {
 		baseUrl
 	};
 }
-
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 	if (request.action === "saveStory") {
 		saveStory().then(result => {
@@ -225,4 +280,16 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 		});
 		return true; // Required for async sendResponse
 	}
+	if (request.action === "getLatestChapters") {
+		getSBAllThreadmarksAndCurrentChapter().then(({ threadmarks }) => {
+			sendResponse({
+				maxChapter: threadmarks.length,
+				chapters: threadmarks
+			});
+		});
+		return true; // Required for async sendResponse
+	}
 });
+
+// AUTOMATE: Run chapter update every time content script loads
+updateAllStoriesMaxChapter();

@@ -174,4 +174,6 @@ document.addEventListener('DOMContentLoaded', () => {
 		currentUser = user;
 		showLoggedInState(user.email);
 	}
+
+
 });
