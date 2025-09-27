@@ -216,6 +216,14 @@
 						</form>
 					</div>
 				</div>
+				<!-- Filter Bar -->
+				<div id="stories-filter-bar" class="mb-6 flex flex-wrap gap-4 items-center">
+					<input id="filter-title" type="text" placeholder="Filter by Title" class="px-3 py-2 border border-gray-300 rounded-md bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+					<input id="filter-author" type="text" placeholder="Filter by Author" class="px-3 py-2 border border-gray-300 rounded-md bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+					<input id="filter-tags" type="text" placeholder="Filter by Tags" class="px-3 py-2 border border-gray-300 rounded-md bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+					<button id="clear-filters" class="bg-gray-200 text-gray-800 px-3 py-2 rounded-md hover:bg-gray-300 transition-colors text-sm">Clear Filters</button>
+				</div>
+
 				<!-- Stories Grid -->
 				<div>
 					<h2 class="text-2xl font-semibold text-gray-900 mb-6">Your Saved Stories (<span id="stories-count">0</span>)</h2>
@@ -231,6 +239,36 @@
 	</div>
 	<script>
 		let editingStoryId = null;
+
+		// Filtering state
+		let allStories = [];
+		let filterTitle = '';
+		let filterAuthor = '';
+		let filterTags = '';
+
+		// Update loadStories to store all stories and apply filters
+		async function loadStories(userId) {
+			if (!userId) {
+				allStories = [];
+				renderStories([]);
+				return;
+			}
+			const res = await fetch(`/api/stories?user_id=${encodeURIComponent(userId)}`);
+			allStories = res.ok ? await res.json() : [];
+			applyFilters();
+		}
+
+		// Filtering logic
+		function applyFilters() {
+			const filtered = allStories.filter(story => {
+				const titleMatch = !filterTitle || (story.title && story.title.toLowerCase().includes(filterTitle));
+				const authorMatch = !filterAuthor || (story.author && story.author.toLowerCase().includes(filterAuthor));
+				const tagsMatch = !filterTags || (story.tags && story.tags.toLowerCase().includes(filterTags));
+				return titleMatch && authorMatch && tagsMatch;
+			});
+			renderStories(filtered);
+		}
+
 		function setDarkMode(enabled) {
 			
 			const body = document.getElementById('body-root');
