@@ -9,9 +9,27 @@ document.addEventListener('DOMContentLoaded', () => {
 	const loggedInBox = document.getElementById('loggedInBox');
 	const userInfo = document.getElementById('userInfo');
 	const logoutBtn = document.getElementById('logoutBtn');
+	const storiesList = document.getElementById('storiesList'); // Add this if you have a stories container
 
 	let isSignUp = false;
 	let currentUser = null;
+
+	// Helper: Render stories in popup
+	async function refreshStories() {
+		const user = JSON.parse(localStorage.getItem('storySaverUser') || 'null');
+		if (!user) return;
+		const res = await fetch(`${API_BASE}/api/stories?user_id=${user.id}`);
+		const stories = res.ok ? await res.json() : [];
+		// Render stories in your popup (replace with your own rendering logic)
+		if (storiesList) {
+			storiesList.innerHTML = stories.map(story => `
+				<div class="story-card">
+					<strong>${story.title}</strong> by ${story.author || 'Unknown'}<br>
+					Chapters: ${story.maxChapter || story.chapters?.length || 0}
+				</div>
+			`).join('');
+		}
+	}
 
 	// Toggle sign up / sign in
 	toggleBtn.addEventListener('click', () => {
@@ -68,6 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
 					currentUser = data.user;
 					localStorage.setItem('storySaverUser', JSON.stringify(currentUser));
 					showLoggedInState(currentUser.email);
+					refreshStories(); // Auto-update stories after login
 				} else {
 					loginStatus.style.color = '#ef4444';
 					loginStatus.textContent = data.error || 'Invalid credentials!';
@@ -102,9 +121,9 @@ document.addEventListener('DOMContentLoaded', () => {
 		statusDiv.textContent = '';
 		authForm.reset();
 		saveStoryForm.reset();
+		if (storiesList) storiesList.innerHTML = '';
 	});
 
-	// Handle save story
 	// Handle save story
 	saveStoryForm.addEventListener('submit', async (e) => {
 		e.preventDefault();
@@ -142,7 +161,7 @@ document.addEventListener('DOMContentLoaded', () => {
 					chapters: response.chapters,
 					chapter: response.chapter,
 					currentThreadmarkNumber: response.currentThreadmarkNumber,
-					maxChapter: response.maxChapter, // <-- Added line
+					maxChapter: response.maxChapter,
 					chapterUrl: response.chapterUrl,
 					tags: response.tags || "",
 					datesaved: new Date().toISOString()
@@ -156,6 +175,7 @@ document.addEventListener('DOMContentLoaded', () => {
 					if (res.ok) {
 						statusDiv.style.color = '#10b981';
 						statusDiv.textContent = 'Story saved!';
+						refreshStories(); // Auto-update cards after saving
 					} else {
 						const data = await res.json();
 						statusDiv.style.color = '#ef4444';
@@ -168,12 +188,12 @@ document.addEventListener('DOMContentLoaded', () => {
 			});
 		});
 	});
+
 	// Auto-login if user info is stored
 	const user = JSON.parse(localStorage.getItem('storySaverUser') || 'null');
 	if (user) {
 		currentUser = user;
 		showLoggedInState(user.email);
+		refreshStories(); // Auto-update stories on popup open
 	}
-
-
 });
