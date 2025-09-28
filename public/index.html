@@ -230,14 +230,6 @@
 						</form>
 					</div>
 				</div>
-				<div class="mb-4 flex items-center gap-2">
-					<input type="text"
-						   id="story-search-input"
-						   class="w-full md:w-1/2 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-						   placeholder="Search stories by title..."
-						   autocomplete="off" />
-				</div>
-
 				<!-- Add this above the stories grid inside the dashboard-page -->
 				<div class="mb-6">
 					<button id="toggle-filter-btn" class="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white px-3 py-2 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors text-sm">
@@ -253,26 +245,14 @@
 						</select>
 					</div>
 				</div>
-
-				<!-- Add this above the stories grid inside the dashboard-page -->
-				<div class="mb-6">
-					<div class="bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-700 rounded-lg p-4 flex items-center gap-4">
-						<div>
-							<h3 class="font-semibold text-blue-700 dark:text-blue-300 mb-1">Get the Story Saver Extension</h3>
-							<p class="text-sm text-gray-700 dark:text-gray-200 mb-2">
-								To save stories directly from websites like AO3 or SpaceBattles, install the <a href="https://chrome.google.com/webstore/detail/story-saver/your-extension-id" target="_blank" class="underline text-blue-600 dark:text-blue-400">Story Saver</a> browser extension.
-							</p>
-							<p class="text-xs text-gray-500 dark:text-gray-400">
-								After installing, use the extension to save story pages and upload them here.
-							</p>
-						</div>
-						<div>
-							<a href="https://chrome.google.com/webstore/detail/story-saver/your-extension-id" target="_blank" class="bg-blue-600 dark:bg-blue-700 text-white px-4 py-2 rounded hover:bg-blue-700 dark:hover:bg-blue-800 transition-colors text-sm font-medium">
-								Download Story Saver
-							</a>
-						</div>
-					</div>
+				<div class="mb-4 flex items-center gap-2">
+					<input type="text"
+						   id="story-search-input"
+						   class="w-full md:w-1/2 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+						   placeholder="Search stories by title..."
+						   autocomplete="off" />
 				</div>
+
 				<!-- Stories Grid -->
 				<div>
 					<h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-6">Your Saved Stories (<span id="stories-count">0</span>)</h2>
@@ -352,14 +332,6 @@
 				loadStories(user.id);
 			} else {
 				renderStories([]);
-			}
-
-			const extensionInfo = document.getElementById('extension-info');
-			const savedUser = localStorage.getItem('storySaverUser');
-			if (!savedUser) {
-				extensionInfo.classList.remove('hidden');
-			} else {
-				extensionInfo.classList.add('hidden');
 			}
 		});
 
@@ -467,7 +439,6 @@
 			document.getElementById('welcome-user').textContent = 'Welcome, ' + userEmail;
 			document.getElementById('logout-btn').classList.remove('hidden');
 			document.getElementById('signin-btn').classList.add('hidden');
-			document.getElementById('extension-info').classList.add('hidden');
 			const darkMode = localStorage.getItem('storySaverDarkMode') === '1';
 			setDarkMode(darkMode);
 		}
@@ -695,7 +666,6 @@
 			document.getElementById('welcome-user').textContent = 'Welcome, Guest';
 			document.getElementById('logout-btn').classList.add('hidden');
 			document.getElementById('signin-btn').classList.remove('hidden');
-			document.getElementById('extension-info').classList.add('hidden');
 			renderStories([]);
 		}
 	</script>
