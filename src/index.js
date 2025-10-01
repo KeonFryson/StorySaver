@@ -366,6 +366,7 @@ async function scrapeChaptersFromUrl(url) {
 	}
 
 	const site = getSiteType(url);
+	console.log(`[SCRAPE] Site type: ${site} for url: ${url}`);
 	if (!site) return null;
 
 	let chapters = [];
@@ -382,9 +383,12 @@ async function scrapeChaptersFromUrl(url) {
 			break;
 		}
 
+		console.log(`[SCRAPE] Fetching page: ${pageUrl}`);
 		const response = await fetch(pageUrl);
+		console.log(`[SCRAPE] Response status: ${response.status}`);
 		if (!response.ok) break;
 		const html = await response.text();
+		console.log(`[SCRAPE] HTML length: ${html.length}`);
 
 		// Match threadmark links (robust for both selectors)
 		const matches = [
@@ -392,10 +396,14 @@ async function scrapeChaptersFromUrl(url) {
 			...html.matchAll(/<a[^>]*href="([^"]*threadmarks[^"]*)"[^>]*class="structItem-title[^"]*"[^>]*>(.*?)<\/a>/g)
 		];
 
+		console.log(`[SCRAPE] Matches found on page ${page}: ${matches.length}`);
+
 		const pageChapters = matches.map(m => ({
 			title: m[2].replace(/<[^>]+>/g, '').trim(),
 			url: m[1].startsWith('http') ? m[1] : `https://${site === 'SV' ? 'forums.sufficientvelocity.com' : site === 'SB' ? 'forums.spacebattles.com' : 'forum.questionablequesting.com'}${m[1]}`
 		}));
+
+		console.log(`[SCRAPE] Chapters parsed on page ${page}: ${pageChapters.length}`);
 
 		if (pageChapters.length === 0) break;
 		chapters.push(...pageChapters);
@@ -403,6 +411,7 @@ async function scrapeChaptersFromUrl(url) {
 	}
 
 	maxChapter = chapters.length;
+	console.log(`[SCRAPE] Total chapters found: ${maxChapter}`);
 
 	return {
 		chapters,
