@@ -389,22 +389,31 @@ async function scrapeChaptersFromUrl(url) {
 		const html = await response.text();
 		console.log(`[SCRAPE] HTML length: ${html.length}`);
 
-		// Parse HTML and select threadmark links
+		// Parse HTML and select threadmark divs
 		let pageChapters = [];
 		try {
 			const dom = new DOMParser().parseFromString(html, "text/html");
-			const links = dom.querySelectorAll('.structItem--threadmark .structItem-title a');
-			pageChapters = Array.from(links).map(a => ({
-				title: a.textContent.trim(),
-				url: a.href.startsWith('http') ? a.href : `https://${site === 'SV' ? 'forums.sufficientvelocity.com' : site === 'SB' ? 'forums.spacebattles.com' : 'forum.questionablequesting.com'}${a.getAttribute('href')}`
-			}));
+			const threadmarkDivs = dom.querySelectorAll('.structItem.structItem--threadmark');
+			pageChapters = Array.from(threadmarkDivs).map(div => {
+				const titleAnchor = div.querySelector('.structItem-title a');
+				return {
+					title: titleAnchor ? titleAnchor.textContent.trim() : null,
+					url: titleAnchor ? (titleAnchor.href.startsWith('http') ? titleAnchor.href : `https://${site === 'SV' ? 'forums.sufficientvelocity.com' : site === 'SB' ? 'forums.spacebattles.com' : 'forum.questionablequesting.com'}${titleAnchor.getAttribute('href')}`) : null,
+					author: div.getAttribute('data-content-author'),
+					date: div.getAttribute('data-content-date'),
+					likes: div.getAttribute('data-likes')
+				};
+			});
 		} catch (err) {
 			console.log(`[SCRAPE] DOMParser failed, fallback to regex`);
 			// Fallback regex (less reliable)
-			const matches = [...html.matchAll(/<a[^>]*href="([^"]+)"[^>]*>(Chapter[^<]*)<\/a>/gi)];
+			const matches = [...html.matchAll(/<div[^>]*class="structItem structItem--threadmark"[^>]*data-likes="(\d+)"[^>]*data-content-author="([^"]+)"[^>]*data-content-date="([^"]+)"[^>]*>.*?<a[^>]*href="([^"]+)"[^>]*>([^<]*)<\/a>/gi)];
 			pageChapters = matches.map(m => ({
-				title: m[2].replace(/<[^>]+>/g, '').trim(),
-				url: m[1].startsWith('http') ? m[1] : `https://${site === 'SV' ? 'forums.sufficientvelocity.com' : site === 'SB' ? 'forums.spacebattles.com' : 'forum.questionablequesting.com'}${m[1]}`
+				title: m[5].replace(/<[^>]+>/g, '').trim(),
+				url: m[4].startsWith('http') ? m[4] : `https://${site === 'SV' ? 'forums.sufficientvelocity.com' : site === 'SB' ? 'forums.spacebattles.com' : 'forum.questionablequesting.com'}${m[4]}`,
+				author: m[2],
+				date: m[3],
+				likes: m[1]
 			}));
 		}
 
