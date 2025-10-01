@@ -415,7 +415,7 @@ export default {
 						}
 						maxChapter = chapters.length;
 						currentChapter = chapters[chapters.length - 1] || null;
-						currentThreadmarkNumber = currentChapter ? chapters.length : null;
+						//currentThreadmarkNumber = currentChapter ? chapters.length : null;
 						chapterUrl = currentChapter ? currentChapter.url : url;
 					} else {
 						// Fallback: regex parsing
