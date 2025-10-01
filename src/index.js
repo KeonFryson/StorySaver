@@ -327,7 +327,7 @@ export default {
 			const story = results[0];
 
 			// Scrape chapters from story.url (implement your scraping logic here)
-			const chaptersData = await scrapeChaptersFromUrl(story.url);
+			const chaptersData = await scrapeChaptersFromUrl(story.url, env);
 
 			if (!chaptersData) {
 				return json({ error: "Failed to scrape chapters" }, 500);
