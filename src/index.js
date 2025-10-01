@@ -336,33 +336,64 @@ export default {
 				}
 
 				// XenForo forums (SB, SV, QQ)
-				function scrapeXenforo(doc, url) {
+				// XenForo forums (SB, SV, QQ)
+				function scrapeXenforo(doc, html, url) {
 					// Title
-					const title = doc.querySelector('h1.p-title-value')?.textContent?.trim() || doc.querySelector('title')?.textContent?.trim() || "";
-					// Author
-					const author = doc.querySelector('.message-user .username')?.textContent?.trim() || "";
-					// Description
-					const desc = doc.querySelector('.message-body .bbWrapper')?.textContent?.trim() || "";
-					// Chapters/Threadmarks
+					let title = "";
+					let author = "";
+					let desc = "";
 					let chapters = [];
-					doc.querySelectorAll('.structItem--threadmark .structItem-title a, .structItem-title a[href*="threadmarks"]').forEach(a => {
-						chapters.push({
-							title: a.textContent.trim(),
-							url: a.href
-						});
-					});
-					if (chapters.length === 0) {
-						doc.querySelectorAll('.message-threadmarkList .structItem-title a').forEach(a => {
+					let maxChapter = null;
+					let currentChapter = null;
+					let currentThreadmarkNumber = null;
+					let chapterUrl = url;
+
+					if (doc) {
+						title = doc.querySelector('h1.p-title-value')?.textContent?.trim() || doc.querySelector('title')?.textContent?.trim() || "";
+						author = doc.querySelector('.message-user .username')?.textContent?.trim() || "";
+						desc = doc.querySelector('.message-body .bbWrapper')?.textContent?.trim() || "";
+						doc.querySelectorAll('.structItem--threadmark .structItem-title a, .structItem-title a[href*="threadmarks"]').forEach(a => {
 							chapters.push({
 								title: a.textContent.trim(),
 								url: a.href
 							});
 						});
+						if (chapters.length === 0) {
+							doc.querySelectorAll('.message-threadmarkList .structItem-title a').forEach(a => {
+								chapters.push({
+									title: a.textContent.trim(),
+									url: a.href
+								});
+							});
+						}
+						maxChapter = chapters.length;
+						currentChapter = chapters[chapters.length - 1] || null;
+						currentThreadmarkNumber = currentChapter ? chapters.length : null;
+						chapterUrl = currentChapter ? currentChapter.url : url;
+					} else {
+						// Fallback: regex parsing
+						const titleMatch = html.match(/<h1[^>]*class="p-title-value"[^>]*>([^<]+)<\/h1>/) || html.match(/<title>([^<]+)<\/title>/);
+						title = titleMatch ? titleMatch[1].trim() : "";
+						const authorMatch = html.match(/<a[^>]*class="username"[^>]*>([^<]+)<\/a>/);
+						author = authorMatch ? authorMatch[1].trim() : "";
+						const descMatch = html.match(/<div[^>]*class="message-body[^"]*"[^>]*>\s*<div[^>]*class="bbWrapper"[^>]*>([\s\S]*?)<\/div>/);
+						desc = descMatch ? descMatch[1].replace(/<[^>]+>/g, '').trim() : "";
+
+						// Threadmarks/chapters: very basic fallback
+						const chapterRegex = /<a[^>]*class="structItem-title"[^>]*href="([^"]+)"[^>]*>([^<]+)<\/a>/g;
+						let match;
+						while ((match = chapterRegex.exec(html)) !== null) {
+							chapters.push({
+								title: match[2].trim(),
+								url: match[1]
+							});
+						}
+						maxChapter = chapters.length;
+						currentChapter = chapters[chapters.length - 1] || null;
+						currentThreadmarkNumber = currentChapter ? chapters.length : null;
+						chapterUrl = currentChapter ? currentChapter.url : url;
 					}
-					const maxChapter = chapters.length;
-					// Current chapter
-					let currentChapter = chapters[chapters.length - 1] || null;
-					let currentThreadmarkNumber = currentChapter ? chapters.length : null;
+
 					return {
 						title,
 						author,
@@ -371,7 +402,7 @@ export default {
 						chapter: currentChapter ? currentChapter.title : "",
 						maxChapter,
 						currentThreadmarkNumber,
-						chapterUrl: currentChapter ? currentChapter.url : url,
+						chapterUrl,
 						url
 					};
 				}
@@ -413,7 +444,7 @@ export default {
 
 				let result;
 				if (site === 'SB' || site === 'SV' || site === 'QQ') {
-					result = scrapeXenforo(doc, urlToScrape);
+					result = scrapeXenforo(doc, html, urlToScrape);
 				} else if (urlToScrape.includes("archiveofourown.org")) {
 					result = scrapeAO3(html, urlToScrape);
 				} else {
