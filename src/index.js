@@ -377,6 +377,8 @@ async function loginToQQ(username, password, threadUrl) {
 	formData.append('login', username);
 	formData.append('password', password);
 	formData.append('_xfToken', csrfToken);
+	formData.append('remember', '1');
+	formData.append('redirect', threadUrl || '/');
 
 	const response = await fetch(loginUrl, {
 		method: 'POST',
