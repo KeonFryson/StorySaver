@@ -390,12 +390,20 @@ async function scrapeChaptersFromUrl(url) {
 		console.log(`[SCRAPE] HTML length: ${html.length}`);
 
 		// Parse HTML and select threadmark divs
+		// Parse HTML and select threadmark divs
 		let pageChapters = [];
 		try {
 			const dom = new DOMParser().parseFromString(html, "text/html");
-			const threadmarkDivs = dom.querySelectorAll('.structItem.structItem--threadmark');
+			// Try multiple selectors for threadmarks
+			let threadmarkDivs = dom.querySelectorAll('.structItem.structItem--threadmark');
+			if (threadmarkDivs.length === 0) {
+				threadmarkDivs = dom.querySelectorAll('.structItem--threadmark');
+			}
+			if (threadmarkDivs.length === 0) {
+				threadmarkDivs = dom.querySelectorAll('[data-content-author][data-content-date]');
+			}
 			pageChapters = Array.from(threadmarkDivs).map(div => {
-				const titleAnchor = div.querySelector('.structItem-title a');
+				const titleAnchor = div.querySelector('.structItem-title a') || div.querySelector('a');
 				return {
 					title: titleAnchor ? titleAnchor.textContent.trim() : null,
 					url: titleAnchor ? (titleAnchor.href.startsWith('http') ? titleAnchor.href : `https://${site === 'SV' ? 'forums.sufficientvelocity.com' : site === 'SB' ? 'forums.spacebattles.com' : 'forum.questionablequesting.com'}${titleAnchor.getAttribute('href')}`) : null,
@@ -406,14 +414,14 @@ async function scrapeChaptersFromUrl(url) {
 			});
 		} catch (err) {
 			console.log(`[SCRAPE] DOMParser failed, fallback to regex`);
-			// Fallback regex (less reliable)
-			const matches = [...html.matchAll(/<div[^>]*class="structItem structItem--threadmark"[^>]*data-likes="(\d+)"[^>]*data-content-author="([^"]+)"[^>]*data-content-date="([^"]+)"[^>]*>.*?<a[^>]*href="([^"]+)"[^>]*>([^<]*)<\/a>/gi)];
+			// Fallback regex (less strict)
+			const matches = [...html.matchAll(/<div[^>]*class="[^"]*threadmark[^"]*"[^>]*data-content-author="([^"]+)"[^>]*data-content-date="([^"]+)"[^>]*data-likes="(\d+)"[^>]*>[\s\S]*?<a[^>]*href="([^"]+)"[^>]*>(.*?)<\/a>/gi)];
 			pageChapters = matches.map(m => ({
 				title: m[5].replace(/<[^>]+>/g, '').trim(),
 				url: m[4].startsWith('http') ? m[4] : `https://${site === 'SV' ? 'forums.sufficientvelocity.com' : site === 'SB' ? 'forums.spacebattles.com' : 'forum.questionablequesting.com'}${m[4]}`,
-				author: m[2],
-				date: m[3],
-				likes: m[1]
+				author: m[1],
+				date: m[2],
+				likes: m[3]
 			}));
 		}
 
