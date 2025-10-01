@@ -461,25 +461,12 @@ async function scrapeChaptersFromUrl(url, env) {
 	let page = 1;
 	let maxChapter = 0;
 
-	// Prefer pre-saved QQ cookie from env
+	// --- HARDCODED QQ COOKIE ---
 	let qqSessionCookie = null;
 	if (site === 'QQ') {
-		if (env.QQ_SESSION_COOKIE) {
-			qqSessionCookie = env.QQ_SESSION_COOKIE;
-			console.log(`[SCRAPE] Using persistent QQ_SESSION_COOKIE from env`);
-		} else {
-			// fallback to login
-			const QQ_USERNAME = "ChaosDev";
-			const QQ_PASSWORD = "@ChaosDev112115";
-			const threadUrl = url.split('/page-')[0].split('/threadmarks')[0].split('#')[0];
-			try {
-				qqSessionCookie = await loginToQQ(QQ_USERNAME, QQ_PASSWORD, threadUrl);
-				console.log(`[SCRAPE] Logged in dynamically to QQ`);
-			} catch (err) {
-				console.log(`[SCRAPE] QQ login failed:`, err);
-				return null;
-			}
-		}
+		// Replace this string with your actual cookie values
+		qqSessionCookie = "xf_csrf=DH5ZEKgdfCg9yK-X; xf_session=pn5suk8RzfyiYwo4dSY5kDrK7IDp7H-N; xf_user=189892%2CkYj4pTgfPY47TAruoS4OrBF9x5qSBL9lLuCcp_W0";
+		console.log(`[SCRAPE] Using hardcoded QQ_SESSION_COOKIE`);
 	}
 
 	while (true) {
