@@ -358,50 +358,79 @@ export default {
 
 async function scrapeChaptersFromUrl(url) {
 	try {
-		// Normalize base URL (remove /page-... and trailing hash)
+		// Detect site type
+		const host = new URL(url).hostname;
+		let site = "SB";
+		if (host.includes('sufficientvelocity.com')) site = "SV";
+		if (host.includes('questionablequesting.com')) site = "QQ";
+		if (host.includes('forums.sufficientvelocity.com')) site = "SV";
+		if (host.includes('forum.questionablequesting.com')) site = "QQ";
+
+		// Normalize base URL
 		let baseUrl = url.split('/page-')[0].split('#')[0];
 		if (!baseUrl.endsWith('/')) baseUrl += '/';
 
-		let allChapters = [];
+		let allThreadmarks = [];
 		let page = 1;
-		const maxPages = 10; // Safety limit to avoid infinite loop
+		const maxPages = 10; // Safety limit
 
 		while (page <= maxPages) {
-			const threadmarksUrl = `${baseUrl}threadmarks?per_page=200&page=${page}`;
-			const response = await fetch(threadmarksUrl);
+			let pageUrl;
+			if (site === 'SV' || site === 'SB' || site === 'QQ') {
+				pageUrl = baseUrl + `threadmarks?per_page=200&page=${page}`;
+			} else {
+				break;
+			}
+			const response = await fetch(pageUrl);
 			if (!response.ok) break;
 			const html = await response.text();
 
-			// Find threadmark links in the HTML
-			const regex = /<a[^>]+class="structItem-title[^"]*"[^>]*href="([^"]+)"[^>]*>(.*?)<\/a>/g;
+			// Simulate: document.querySelectorAll('.structItem--threadmark .structItem-title a')
+			const threadmarkRegex = /<div[^>]*class="structItem--threadmark[^"]*"[^>]*>[\s\S]*?<a[^>]*class="structItem-title[^"]*"[^>]*href="([^"]+)"[^>]*>(.*?)<\/a>/g;
 			let match;
 			let found = false;
-			while ((match = regex.exec(html)) !== null) {
+			while ((match = threadmarkRegex.exec(html)) !== null) {
 				const href = match[1];
 				const title = match[2].replace(/<[^>]+>/g, '').trim();
-				// Filter out awards and non-chapter links
 				if (!href.includes('/awards/award/')) {
-					allChapters.push({
+					allThreadmarks.push({
 						title,
-						url: href.startsWith('http') ? href : `https://${new URL(baseUrl).host}${href}`
+						url: href.startsWith('http') ? href : `https://${host}${href}`
 					});
 					found = true;
 				}
 			}
-			// If no chapters found on this page, stop
-			if (!found) break;
+
+			// Fallback: .message-threadmarkList .structItem-title a
+			if (!found) {
+				const fallbackRegex = /<div[^>]*class="message-threadmarkList[^"]*"[^>]*>[\s\S]*?<a[^>]*class="structItem-title[^"]*"[^>]*href="([^"]+)"[^>]*>(.*?)<\/a>/g;
+				while ((match = fallbackRegex.exec(html)) !== null) {
+					const href = match[1];
+					const title = match[2].replace(/<[^>]+>/g, '').trim();
+					if (!href.includes('/awards/award/')) {
+						allThreadmarks.push({
+							title,
+							url: href.startsWith('http') ? href : `https://${host}${href}`
+						});
+					}
+				}
+			}
+
+			// If no threadmarks found, stop
+			if (!found && allThreadmarks.length === 0) break;
 			page++;
 		}
 
 		return {
-			chapters: allChapters,
-			maxChapter: allChapters.length
+			chapters: allThreadmarks,
+			maxChapter: allThreadmarks.length
 		};
 	} catch (err) {
 		console.log("[DEBUG] scrapeChaptersFromUrl error:", err);
 		return null;
 	}
 }
+
 // Helper: JSON response
 function json(data, status = 200) {
 	return new Response(JSON.stringify(data), {
