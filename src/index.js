@@ -1,3 +1,4 @@
+const scrapeRateLimit = new Map(); // key: user or IP, value: timestamp
 export default {
 	async fetch(request, env) {
 		const url = new URL(request.url);
@@ -365,7 +366,26 @@ export default {
 					}, res.status);
 				}
 
-				const html = await res.text();
+				// --- Rate limiting logic ---
+				const userKey = request.headers.get("x-user-id") || request.headers.get("x-forwarded-for") || "global";
+				const now = Date.now();
+				const lastScrape = scrapeRateLimit.get(userKey) || 0;
+				if (now - lastScrape < 60 * 1000) { // 1 minute
+					return json({ error: "Rate limit: Only one scrape per minute allowed." }, 429);
+				}
+				scrapeRateLimit.set(userKey, now);
+
+				try {
+					const res = await fetch(urlToScrape, { headers: { "User-Agent": "StorySaverBot/1.0" } });
+					if (!res.ok) {
+						return json({
+							error: "Failed to fetch source URL",
+							status: res.status,
+							statusText: res.statusText
+						}, res.status);
+					}
+
+					const html = await res.text();
 
 				// Helper: get site type from URL
 				function getSiteTypeFromUrl(url) {
@@ -501,21 +521,29 @@ export default {
 						url
 					};
 				}
-
-				let result;
-				if (site === 'SB' || site === 'SV' || site === 'QQ') {
-					result = scrapeXenforo(doc, html, urlToScrape);
-				} else if (urlToScrape.includes("archiveofourown.org")) {
-					result = scrapeAO3(html, urlToScrape);
-				} else {
-					result = scrapeGeneric(doc, html, urlToScrape);
+					function getSiteTypeFromUrl(url) { /* ... */ }
+					const site = getSiteTypeFromUrl(urlToScrape);
+					let doc;
+					if (typeof DOMParser !== "undefined") {
+						const parser = new DOMParser();
+						doc = parser.parseFromString(html, "text/html");
+					}
+					function scrapeXenforo(doc, html, url) { /* ... */ }
+					function scrapeAO3(html, url) { /* ... */ }
+					function scrapeGeneric(doc, html, url) { /* ... */ }
+					let result;
+					if (site === 'SB' || site === 'SV' || site === 'QQ') {
+						result = scrapeXenforo(doc, html, urlToScrape);
+					} else if (urlToScrape.includes("archiveofourown.org")) {
+						result = scrapeAO3(html, urlToScrape);
+					} else {
+						result = scrapeGeneric(doc, html, urlToScrape);
+					}
+					return json(result);
+				} catch (err) {
+					console.log("[DEBUG] Scrape error:", err);
+					return json({ error: "Scrape failed", details: err.message }, 500);
 				}
-
-				return json(result);
-			} catch (err) {
-				console.log("[DEBUG] Scrape error:", err);
-				return json({ error: "Scrape failed", details: err.message }, 500);
-			}
 		}
 
 
