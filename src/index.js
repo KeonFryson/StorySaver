@@ -417,7 +417,7 @@ export default {
 						currentChapter = chapters[chapters.length - 1] || null;
 						currentThreadmarkNumber = currentChapter ? chapters.length : null;
 						chapterUrl = currentChapter ? currentChapter.url : url;
-					} lse {
+					} else {
 						// Fallback: regex parsing
 						const titleMatch = html.match(/<h1[^>]*class="p-title-value"[^>]*>([^<]+)<\/h1>/) || html.match(/<title>([^<]+)<\/title>/);
 						title = titleMatch ? titleMatch[1].trim() : "";
