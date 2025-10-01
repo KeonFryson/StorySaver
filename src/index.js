@@ -386,41 +386,64 @@ async function loginToQQ(username, password, threadUrl) {
 			'Referer': 'https://forum.questionablequesting.com/login/'
 		},
 		body: formData,
-		redirect: 'manual' // Prevent auto-following redirects
+		redirect: 'manual'
 	});
 
-	let cookies = [];
+	// Collect all cookies from login response
+	let cookies = {};
 	const setCookie = response.headers.get('set-cookie');
-	if (setCookie) cookies.push(...setCookie.split(',').map(c => c.split(';')[0]));
+	if (setCookie) {
+		setCookie.split(',').forEach(cookieStr => {
+			const [cookiePair] = cookieStr.split(';');
+			const [name, value] = cookiePair.split('=');
+			cookies[name.trim()] = value ? value.trim() : '';
+		});
+	}
 
-	// Ruby checks for 303 status for successful login
+	console.log('[QQ LOGIN] Initial cookies after login:', cookies);
+
+	// Fetch thread page for additional cookies
 	if (response.status === 303) {
 		qqAuthenticationState = "authenticated";
 		console.log(`[QQ LOGIN] Login successful for ${username}`);
-	} else {
-		qqAuthenticationState = "unauthenticated";
-		console.warn(`[QQ LOGIN] Login failed for ${username} (status: ${response.status})`);
-		// Optionally, send notification or log headers for debugging
-	}
-
-	// Fetch main thread page to get additional cookies only if authenticated
-	if (qqAuthenticationState === "authenticated") {
 		const threadResponse = await fetch(threadUrl, {
 			headers: {
-				'Cookie': cookies.join('; '),
+				'Cookie': Object.entries(cookies).map(([k, v]) => `${k}=${v}`).join('; '),
 				'User-Agent': 'Mozilla/5.0 (compatible; StorySaverBot/1.0)',
 				'Referer': 'https://forum.questionablequesting.com/'
 			}
 		});
 		const threadSetCookie = threadResponse.headers.get('set-cookie');
-		if (threadSetCookie) cookies.push(...threadSetCookie.split(',').map(c => c.split(';')[0]));
-		return cookies.join('; ');
+		if (threadSetCookie) {
+			threadSetCookie.split(',').forEach(cookieStr => {
+				const [cookiePair] = cookieStr.split(';');
+				const [name, value] = cookiePair.split('=');
+				cookies[name.trim()] = value ? value.trim() : '';
+			});
+		}
+		console.log('[QQ LOGIN] Cookies after thread page fetch:', cookies);
 	} else {
+		qqAuthenticationState = "unauthenticated";
+		console.warn(`[QQ LOGIN] Login failed for ${username} (status: ${response.status})`);
 		return null;
 	}
+
+	// Log required cookies
+	console.log('[QQ LOGIN] xf_csrf:', cookies['xf_csrf'] || '(not found)');
+	console.log('[QQ LOGIN] xf_session:', cookies['xf_session'] || '(not found)');
+	console.log('[QQ LOGIN] xf_user:', cookies['xf_user'] || '(not found)');
+
+	// Build cookie string for requests
+	const requiredCookies = ['xf_csrf', 'xf_session', 'xf_user'];
+	const cookieString = requiredCookies
+		.filter(c => c in cookies)
+		.map(c => `${c}=${cookies[c]}`)
+		.join('; ');
+
+	return cookieString;
 }
 
-async function scrapeChaptersFromUrl(url) {
+async function scrapeChaptersFromUrl(url, env) {
 	function getSiteType(url) {
 		if (url.includes('sufficientvelocity.com')) return 'SV';
 		if (url.includes('spacebattles.com')) return 'SB';
@@ -436,21 +459,24 @@ async function scrapeChaptersFromUrl(url) {
 	let page = 1;
 	let maxChapter = 0;
 
-	// Hardcoded QQ credentials (for demonstration only)
-	const QQ_USERNAME = "ChaosDev";
-	const QQ_PASSWORD = "@ChaosDev112115";
+	// Prefer pre-saved QQ cookie from env
 	let qqSessionCookie = null;
-
-
 	if (site === 'QQ') {
-		// Extract thread URL (remove /page-... and /threadmarks... and fragments)
-		const threadUrl = url.split('/page-')[0].split('/threadmarks')[0].split('#')[0];
-		try {
-			qqSessionCookie = await loginToQQ(QQ_USERNAME, QQ_PASSWORD, threadUrl);
-			console.log(`[SCRAPE] QQ login successful, got cookie.`);
-		} catch (err) {
-			console.log(`[SCRAPE] QQ login failed:`, err);
-			return null;
+		if (env.QQ_SESSION_COOKIE) {
+			qqSessionCookie = env.QQ_SESSION_COOKIE;
+			console.log(`[SCRAPE] Using persistent QQ_SESSION_COOKIE from env`);
+		} else {
+			// fallback to login
+			const QQ_USERNAME = "ChaosDev";
+			const QQ_PASSWORD = "@ChaosDev112115";
+			const threadUrl = url.split('/page-')[0].split('/threadmarks')[0].split('#')[0];
+			try {
+				qqSessionCookie = await loginToQQ(QQ_USERNAME, QQ_PASSWORD, threadUrl);
+				console.log(`[SCRAPE] Logged in dynamically to QQ`);
+			} catch (err) {
+				console.log(`[SCRAPE] QQ login failed:`, err);
+				return null;
+			}
 		}
 	}
 
@@ -469,23 +495,22 @@ async function scrapeChaptersFromUrl(url) {
 		if (site === 'QQ' && qqSessionCookie) {
 			response = await fetch(pageUrl, {
 				headers: {
-					'Cookie': qqSessionCookie, // Should include xf_csrf, xf_user, xf_session
-					'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36',
-					'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
-					'Accept-Language': 'en-US,en;q=0.9',
-					'Connection': 'keep-alive',
-					'Referer': url.split('/threadmarks')[0] // Use main thread URL as referer
+					'Cookie': qqSessionCookie,
+					'User-Agent': 'Mozilla/5.0 (compatible; StorySaverBot/1.0)',
+					'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+					'Referer': url.split('/threadmarks')[0]
 				}
 			});
 		} else {
 			response = await fetch(pageUrl);
 		}
+
 		console.log(`[SCRAPE] Response status: ${response.status}`);
 		if (!response.ok) break;
+
 		const html = await response.text();
 		console.log(`[SCRAPE] HTML length: ${html.length}`);
 
-		// Parse HTML and select threadmark divs
 		let pageChapters = [];
 		try {
 			const dom = new DOMParser().parseFromString(html, "text/html");
@@ -503,7 +528,6 @@ async function scrapeChaptersFromUrl(url) {
 			});
 		} catch (err) {
 			console.log(`[SCRAPE] DOMParser failed, fallback to regex`);
-			// Fallback regex (less strict)
 			const matches = [...html.matchAll(/<div[^>]*class="structItem-title threadmark_depth0"[^>]*>[\s\S]*?<a[^>]*href="([^"]+)"[^>]*>(.*?)<\/a>/gi)];
 			pageChapters = matches.map(m => ({
 				title: m[2].replace(/<[^>]+>/g, '').trim(),
@@ -515,7 +539,6 @@ async function scrapeChaptersFromUrl(url) {
 		}
 
 		console.log(`[SCRAPE] Chapters parsed on page ${page}: ${pageChapters.length}`);
-
 		if (pageChapters.length === 0) break;
 		chapters.push(...pageChapters);
 		page++;
@@ -524,11 +547,9 @@ async function scrapeChaptersFromUrl(url) {
 	maxChapter = chapters.length;
 	console.log(`[SCRAPE] Total chapters found: ${maxChapter}`);
 
-	return {
-		chapters,
-		maxChapter
-	};
+	return { chapters, maxChapter };
 }
+
 
 // Helper: JSON response
 function json(data, status = 200) {
