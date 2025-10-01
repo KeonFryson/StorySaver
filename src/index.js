@@ -465,7 +465,7 @@ async function scrapeChaptersFromUrl(url, env) {
 	let qqSessionCookie = null;
 	if (site === 'QQ') {
 		// Replace this string with your actual cookie values
-		qqSessionCookie = "xf_csrf=DH5ZEKgdfCg9yK-X; xf_session=pn5suk8RzfyiYwo4dSY5kDrK7IDp7H-N; xf_user=189892%2CkYj4pTgfPY47TAruoS4OrBF9x5qSBL9lLuCcp_W0";
+		qqSessionCookie = "xf_csrf=JRwgHX7o4E7o1JC8; xf_session=RXIUCNAOXGAmFaL-7S3LGRaZV-PouKej; xf_user=93603%2CXwSBUqIZHeMGhhOI_zB5nNA34VM7oQVxlKw_iAP7";
 		console.log(`[SCRAPE] Using hardcoded QQ_SESSION_COOKIE`);
 	}
 
