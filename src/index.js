@@ -389,15 +389,24 @@ async function scrapeChaptersFromUrl(url) {
 		const html = await response.text();
 		console.log(`[SCRAPE] HTML length: ${html.length}`);
 
-		// Match threadmark links with class "threadmarkLabel"
-		const matches = [...html.matchAll(/<a[^>]*class="threadmarkLabel"[^>]*href="([^"]+)"[^>]*>(.*?)<\/a>/g)];
-
-		console.log(`[SCRAPE] Matches found on page ${page}: ${matches.length}`);
-
-		const pageChapters = matches.map(m => ({
-			title: m[2].replace(/<[^>]+>/g, '').trim(),
-			url: m[1].startsWith('http') ? m[1] : `https://${site === 'SV' ? 'forums.sufficientvelocity.com' : site === 'SB' ? 'forums.spacebattles.com' : 'forum.questionablequesting.com'}${m[1]}`
-		}));
+		// Parse HTML and select threadmark links
+		let pageChapters = [];
+		try {
+			const dom = new DOMParser().parseFromString(html, "text/html");
+			const links = dom.querySelectorAll('.structItem--threadmark .structItem-title a');
+			pageChapters = Array.from(links).map(a => ({
+				title: a.textContent.trim(),
+				url: a.href.startsWith('http') ? a.href : `https://${site === 'SV' ? 'forums.sufficientvelocity.com' : site === 'SB' ? 'forums.spacebattles.com' : 'forum.questionablequesting.com'}${a.getAttribute('href')}`
+			}));
+		} catch (err) {
+			console.log(`[SCRAPE] DOMParser failed, fallback to regex`);
+			// Fallback regex (less reliable)
+			const matches = [...html.matchAll(/<a[^>]*href="([^"]+)"[^>]*>(Chapter[^<]*)<\/a>/gi)];
+			pageChapters = matches.map(m => ({
+				title: m[2].replace(/<[^>]+>/g, '').trim(),
+				url: m[1].startsWith('http') ? m[1] : `https://${site === 'SV' ? 'forums.sufficientvelocity.com' : site === 'SB' ? 'forums.spacebattles.com' : 'forum.questionablequesting.com'}${m[1]}`
+			}));
+		}
 
 		console.log(`[SCRAPE] Chapters parsed on page ${page}: ${pageChapters.length}`);
 
