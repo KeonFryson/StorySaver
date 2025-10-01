@@ -367,7 +367,9 @@ async function getQQCsrfToken() {
 	return match[1];
 }
 
-// --- UPDATED: Collect all cookies from login response ---
+// --- QQ Authentication State ---
+let qqAuthenticationState = "unknown"; // "authenticated", "unauthenticated", "unknown"
+
 async function loginToQQ(username, password, threadUrl) {
 	const loginUrl = 'https://forum.questionablequesting.com/login/login';
 	const csrfToken = await getQQCsrfToken();
@@ -383,25 +385,39 @@ async function loginToQQ(username, password, threadUrl) {
 			'User-Agent': 'Mozilla/5.0 (compatible; StorySaverBot/1.0)',
 			'Referer': 'https://forum.questionablequesting.com/login/'
 		},
-		body: formData
+		body: formData,
+		redirect: 'manual' // Prevent auto-following redirects
 	});
 
 	let cookies = [];
 	const setCookie = response.headers.get('set-cookie');
 	if (setCookie) cookies.push(...setCookie.split(',').map(c => c.split(';')[0]));
 
-	// Fetch main thread page to get additional cookies
-	const threadResponse = await fetch(threadUrl, {
-		headers: {
-			'Cookie': cookies.join('; '),
-			'User-Agent': 'Mozilla/5.0 (compatible; StorySaverBot/1.0)',
-			'Referer': 'https://forum.questionablequesting.com/'
-		}
-	});
-	const threadSetCookie = threadResponse.headers.get('set-cookie');
-	if (threadSetCookie) cookies.push(...threadSetCookie.split(',').map(c => c.split(';')[0]));
+	// Ruby checks for 303 status for successful login
+	if (response.status === 303) {
+		qqAuthenticationState = "authenticated";
+		console.log(`[QQ LOGIN] Login successful for ${username}`);
+	} else {
+		qqAuthenticationState = "unauthenticated";
+		console.warn(`[QQ LOGIN] Login failed for ${username} (status: ${response.status})`);
+		// Optionally, send notification or log headers for debugging
+	}
 
-	return cookies.join('; ');
+	// Fetch main thread page to get additional cookies only if authenticated
+	if (qqAuthenticationState === "authenticated") {
+		const threadResponse = await fetch(threadUrl, {
+			headers: {
+				'Cookie': cookies.join('; '),
+				'User-Agent': 'Mozilla/5.0 (compatible; StorySaverBot/1.0)',
+				'Referer': 'https://forum.questionablequesting.com/'
+			}
+		});
+		const threadSetCookie = threadResponse.headers.get('set-cookie');
+		if (threadSetCookie) cookies.push(...threadSetCookie.split(',').map(c => c.split(';')[0]));
+		return cookies.join('; ');
+	} else {
+		return null;
+	}
 }
 
 async function scrapeChaptersFromUrl(url) {
