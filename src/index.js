@@ -523,6 +523,7 @@ export default {
 				return json({ error: "Scrape failed", details: err.message }, 500);
 			}
 		}
+	}
 };
 
 // Helper: JSON response
