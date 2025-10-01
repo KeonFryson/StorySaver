@@ -390,23 +390,16 @@ async function scrapeChaptersFromUrl(url) {
 		console.log(`[SCRAPE] HTML length: ${html.length}`);
 
 		// Parse HTML and select threadmark divs
-		// Parse HTML and select threadmark divs
 		let pageChapters = [];
 		try {
 			const dom = new DOMParser().parseFromString(html, "text/html");
-			// Try multiple selectors for threadmarks
 			let threadmarkDivs = dom.querySelectorAll('.structItem.structItem--threadmark');
-			if (threadmarkDivs.length === 0) {
-				threadmarkDivs = dom.querySelectorAll('.structItem--threadmark');
-			}
-			if (threadmarkDivs.length === 0) {
-				threadmarkDivs = dom.querySelectorAll('[data-content-author][data-content-date]');
-			}
 			pageChapters = Array.from(threadmarkDivs).map(div => {
-				const titleAnchor = div.querySelector('.structItem-title a') || div.querySelector('a');
+				const titleDiv = div.querySelector('.structItem-title.threadmark_depth0');
+				const anchor = titleDiv ? titleDiv.querySelector('a') : null;
 				return {
-					title: titleAnchor ? titleAnchor.textContent.trim() : null,
-					url: titleAnchor ? (titleAnchor.href.startsWith('http') ? titleAnchor.href : `https://${site === 'SV' ? 'forums.sufficientvelocity.com' : site === 'SB' ? 'forums.spacebattles.com' : 'forum.questionablequesting.com'}${titleAnchor.getAttribute('href')}`) : null,
+					title: anchor ? anchor.textContent.trim() : null,
+					url: anchor ? (anchor.href.startsWith('http') ? anchor.href : `https://${site === 'SV' ? 'forums.sufficientvelocity.com' : site === 'SB' ? 'forums.spacebattles.com' : 'forum.questionablequesting.com'}${anchor.getAttribute('href')}`) : null,
 					author: div.getAttribute('data-content-author'),
 					date: div.getAttribute('data-content-date'),
 					likes: div.getAttribute('data-likes')
@@ -415,13 +408,13 @@ async function scrapeChaptersFromUrl(url) {
 		} catch (err) {
 			console.log(`[SCRAPE] DOMParser failed, fallback to regex`);
 			// Fallback regex (less strict)
-			const matches = [...html.matchAll(/<div[^>]*class="[^"]*threadmark[^"]*"[^>]*data-content-author="([^"]+)"[^>]*data-content-date="([^"]+)"[^>]*data-likes="(\d+)"[^>]*>[\s\S]*?<a[^>]*href="([^"]+)"[^>]*>(.*?)<\/a>/gi)];
+			const matches = [...html.matchAll(/<div[^>]*class="structItem-title threadmark_depth0"[^>]*>[\s\S]*?<a[^>]*href="([^"]+)"[^>]*>(.*?)<\/a>/gi)];
 			pageChapters = matches.map(m => ({
-				title: m[5].replace(/<[^>]+>/g, '').trim(),
-				url: m[4].startsWith('http') ? m[4] : `https://${site === 'SV' ? 'forums.sufficientvelocity.com' : site === 'SB' ? 'forums.spacebattles.com' : 'forum.questionablequesting.com'}${m[4]}`,
-				author: m[1],
-				date: m[2],
-				likes: m[3]
+				title: m[2].replace(/<[^>]+>/g, '').trim(),
+				url: m[1].startsWith('http') ? m[1] : `https://${site === 'SV' ? 'forums.sufficientvelocity.com' : site === 'SB' ? 'forums.spacebattles.com' : 'forum.questionablequesting.com'}${m[1]}`,
+				author: null,
+				date: null,
+				likes: null
 			}));
 		}
 
