@@ -116,9 +116,6 @@ export default {
 
 		// --- STORIES ---
 
-		// --- STORIES ---
-
-		// Create or update story: POST /api/stories { user_id, title, description, url, ... }
 		// Create or update story: POST /api/stories { user_id, title, description, url, ... }
 		if (pathname === "/api/stories" && request.method === "POST") {
 			const body = await getJsonBody(request);
@@ -356,6 +353,26 @@ export default {
 	},
 };
 
+async function loginToQQ(username, password) {
+	const loginUrl = 'https://forum.questionablequesting.com/login/login';
+	const formData = new URLSearchParams();
+	formData.append('login', username);
+	formData.append('password', password);
+
+	const response = await fetch(loginUrl, {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/x-www-form-urlencoded'
+		},
+		body: formData
+	});
+
+	// Extract cookie from response headers
+	const setCookie = response.headers.get('set-cookie');
+	if (!setCookie) throw new Error('Login failed: No cookie received');
+	return setCookie;
+}
+
 async function scrapeChaptersFromUrl(url) {
 	function getSiteType(url) {
 		if (url.includes('sufficientvelocity.com')) return 'SV';
@@ -372,6 +389,21 @@ async function scrapeChaptersFromUrl(url) {
 	let page = 1;
 	let maxChapter = 0;
 
+	// Hardcoded QQ credentials (for demonstration only)
+	const QQ_USERNAME = "ChaosDev";
+	const QQ_PASSWORD = "@ChaosDev112115";
+	let qqSessionCookie = null;
+
+	if (site === 'QQ') {
+		try {
+			qqSessionCookie = await loginToQQ(QQ_USERNAME, QQ_PASSWORD);
+			console.log(`[SCRAPE] QQ login successful, got cookie.`);
+		} catch (err) {
+			console.log(`[SCRAPE] QQ login failed:`, err);
+			return null;
+		}
+	}
+
 	while (true) {
 		let pageUrl;
 		if (site === 'SV' || site === 'SB' || site === 'QQ') {
@@ -383,7 +415,16 @@ async function scrapeChaptersFromUrl(url) {
 		}
 
 		console.log(`[SCRAPE] Fetching page: ${pageUrl}`);
-		const response = await fetch(pageUrl);
+		let response;
+		if (site === 'QQ' && qqSessionCookie) {
+			response = await fetch(pageUrl, {
+				headers: {
+					'Cookie': qqSessionCookie
+				}
+			});
+		} else {
+			response = await fetch(pageUrl);
+		}
 		console.log(`[SCRAPE] Response status: ${response.status}`);
 		if (!response.ok) break;
 		const html = await response.text();
