@@ -234,6 +234,53 @@ export default {
 			}
 		}
 
+		if (pathname.startsWith("/api/stories/") && request.method === "PUT") {
+			const id = pathname.split("/").pop();
+			const body = await getJsonBody(request);
+			if (!id || !body) {
+				return json({ error: "Missing story id or body" }, 400);
+			}
+			try {
+				const stmt = env.storytracker_db.prepare(
+					`UPDATE stories SET
+				title = ?,
+				description = ?,
+				author = ?,
+				datesaved = ?,
+				chapter = ?,
+				maxChapter = ?,
+				chapterUrl = ?,
+				tags = ?,
+				chapters = ?,
+				baseUrl = ?,
+				url = ?,
+				currentThreadmarkNumber = ?
+			WHERE id = ?`
+				);
+				const result = await stmt.bind(
+					body.title,
+					body.description || null,
+					body.author || null,
+					body.datesaved || null,
+					body.chapter || null,
+					body.maxChapter || null,
+					body.chapterUrl || null,
+					body.tags || null,
+					body.chapters ? JSON.stringify(body.chapters) : null,
+					body.baseUrl || null,
+					body.url || null,
+					body.currentThreadmarkNumber || null,
+					id
+				).run();
+				if (result.changes === 0) {
+					return json({ error: "Story not found" }, 404);
+				}
+				return json({ success: true, updated: true });
+			} catch (err) {
+				return json({ error: err.message }, 400);
+			}
+		}
+
 		// --- CHAPTERS ---
 
 		// Create chapter: POST /api/chapters { story_id, title, content, chapter_number }
@@ -370,7 +417,7 @@ export default {
 						currentChapter = chapters[chapters.length - 1] || null;
 						currentThreadmarkNumber = currentChapter ? chapters.length : null;
 						chapterUrl = currentChapter ? currentChapter.url : url;
-					} else {
+					} lse {
 						// Fallback: regex parsing
 						const titleMatch = html.match(/<h1[^>]*class="p-title-value"[^>]*>([^<]+)<\/h1>/) || html.match(/<title>([^<]+)<\/title>/);
 						title = titleMatch ? titleMatch[1].trim() : "";
@@ -379,7 +426,7 @@ export default {
 						const descMatch = html.match(/<div[^>]*class="message-body[^"]*"[^>]*>\s*<div[^>]*class="bbWrapper"[^>]*>([\s\S]*?)<\/div>/);
 						desc = descMatch ? descMatch[1].replace(/<[^>]+>/g, '').trim() : "";
 
-						// Threadmarks/chapters: very basic fallback
+						// Threadmarks/chapters: fallback
 						const chapterRegex = /<a[^>]*class="structItem-title"[^>]*href="([^"]+)"[^>]*>([^<]+)<\/a>/g;
 						let match;
 						while ((match = chapterRegex.exec(html)) !== null) {
