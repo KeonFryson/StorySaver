@@ -439,8 +439,17 @@ export default {
 						currentChapter = chapters[chapters.length - 1] || null;
 						currentThreadmarkNumber = currentChapter ? chapters.length : null;
 						chapterUrl = currentChapter ? currentChapter.url : url;
-					}
 
+						if (chapters.length === 0) {
+							console.log(`[DEBUG] scrapeXenforo fallback: No chapters found for URL: ${url}`);
+							const idx = html.indexOf('structItem-title');
+							if (idx !== -1) {
+								console.log(`[DEBUG] scrapeXenforo fallback: HTML around structItem-title: ${html.slice(Math.max(0, idx - 250), idx + 250)}`);
+							} else {
+								console.log(`[DEBUG] scrapeXenforo fallback: HTML sample: ${html.slice(0, 500)}`);
+							}
+						}
+					}
 					return {
 						title,
 						author,
