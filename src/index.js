@@ -353,29 +353,43 @@ export default {
 	},
 };
 
+async function getQQCsrfToken() {
+	const loginPageUrl = 'https://forum.questionablequesting.com/login/';
+	const response = await fetch(loginPageUrl, {
+		headers: {
+			'User-Agent': 'Mozilla/5.0 (compatible; StorySaverBot/1.0)',
+			'Referer': 'https://forum.questionablequesting.com/'
+		}
+	});
+	const html = await response.text();
+	const match = html.match(/<input[^>]+name="_xfToken"[^>]+value="([^"]+)"/);
+	if (!match) throw new Error('CSRF token not found on QQ login page');
+	return match[1];
+}
+
 async function loginToQQ(username, password) {
 	const loginUrl = 'https://forum.questionablequesting.com/login/login';
+	const csrfToken = await getQQCsrfToken();
 	const formData = new URLSearchParams();
 	formData.append('login', username);
 	formData.append('password', password);
+	formData.append('_xfToken', csrfToken);
 
 	const response = await fetch(loginUrl, {
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/x-www-form-urlencoded',
 			'User-Agent': 'Mozilla/5.0 (compatible; StorySaverBot/1.0)',
-			'Referer': 'https://forum.questionablequesting.com/'
+			'Referer': 'https://forum.questionablequesting.com/login/'
 		},
 		body: formData
 	});
 
 	const setCookie = response.headers.get('set-cookie');
 	if (!setCookie) throw new Error('Login failed: No cookie received');
-	// Only the cookie value
 	const cookieValue = setCookie.split(';')[0];
 	return cookieValue;
 }
-
 async function scrapeChaptersFromUrl(url) {
 	function getSiteType(url) {
 		if (url.includes('sufficientvelocity.com')) return 'SV';
