@@ -357,7 +357,6 @@ export default {
 };
 
 async function scrapeChaptersFromUrl(url) {
-	// Helper: get site type from URL
 	function getSiteType(url) {
 		if (url.includes('sufficientvelocity.com')) return 'SV';
 		if (url.includes('spacebattles.com')) return 'SB';
@@ -390,11 +389,8 @@ async function scrapeChaptersFromUrl(url) {
 		const html = await response.text();
 		console.log(`[SCRAPE] HTML length: ${html.length}`);
 
-		// Match threadmark links (robust for both selectors)
-		const matches = [
-			...html.matchAll(/<a[^>]*class="structItem-title[^"]*"[^>]*href="([^"]+)"[^>]*>(.*?)<\/a>/g),
-			...html.matchAll(/<a[^>]*href="([^"]*threadmarks[^"]*)"[^>]*class="structItem-title[^"]*"[^>]*>(.*?)<\/a>/g)
-		];
+		// Match threadmark links with class "threadmarkLabel"
+		const matches = [...html.matchAll(/<a[^>]*class="threadmarkLabel"[^>]*href="([^"]+)"[^>]*>(.*?)<\/a>/g)];
 
 		console.log(`[SCRAPE] Matches found on page ${page}: ${matches.length}`);
 
