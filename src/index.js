@@ -315,12 +315,93 @@ export default {
 			return json(results);
 		}
 
+		// --- UPDATE CHAPTERS ENDPOINT ---
+		if (pathname.match(/^\/api\/stories\/\d+\/update-chapters$/) && request.method === "POST") {
+			const storyId = pathname.split("/")[3];
+			console.log(`[DEBUG] Update chapters for story: ${storyId}`);
+
+			// Fetch story from DB
+			const { results } = await env.storytracker_db.prepare(
+				"SELECT * FROM stories WHERE id = ?"
+			).bind(storyId).all();
+			if (results.length === 0) {
+				return json({ error: "Story not found" }, 404);
+			}
+			const story = results[0];
+
+			// Scrape chapters from story.url (implement your scraping logic here)
+			const chaptersData = await scrapeChaptersFromUrl(story.url);
+
+			if (!chaptersData) {
+				return json({ error: "Failed to scrape chapters" }, 500);
+			}
+
+			// Update chapters and maxChapter, but DO NOT change currentThreadmarkNumber
+			const stmt = env.storytracker_db.prepare(
+				`UPDATE stories SET chapters = ?, maxChapter = ? WHERE id = ?`
+			);
+			await stmt.bind(
+				JSON.stringify(chaptersData.chapters),
+				chaptersData.maxChapter,
+				storyId
+			).run();
+
+			console.log(`[DEBUG] Chapters updated for story: ${storyId}`);
+			return json({ success: true, updated: true });
+		}
+
 		console.log(`[DEBUG] Not found: ${pathname}`);
 		// Default: Not found
 		return new Response("Not found", { status: 404 });
 	},
 };
 
+async function scrapeChaptersFromUrl(url) {
+	try {
+		// Normalize base URL (remove /page-... and trailing hash)
+		let baseUrl = url.split('/page-')[0].split('#')[0];
+		if (!baseUrl.endsWith('/')) baseUrl += '/';
+
+		let allChapters = [];
+		let page = 1;
+		const maxPages = 10; // Safety limit to avoid infinite loop
+
+		while (page <= maxPages) {
+			const threadmarksUrl = `${baseUrl}threadmarks?per_page=200&page=${page}`;
+			const response = await fetch(threadmarksUrl);
+			if (!response.ok) break;
+			const html = await response.text();
+
+			// Find threadmark links in the HTML
+			const regex = /<a[^>]+class="structItem-title[^"]*"[^>]*href="([^"]+)"[^>]*>(.*?)<\/a>/g;
+			let match;
+			let found = false;
+			while ((match = regex.exec(html)) !== null) {
+				const href = match[1];
+				const title = match[2].replace(/<[^>]+>/g, '').trim();
+				// Filter out awards and non-chapter links
+				if (!href.includes('/awards/award/')) {
+					allChapters.push({
+						title,
+						url: href.startsWith('http') ? href : `https://${new URL(baseUrl).host}${href}`
+					});
+					found = true;
+				}
+			}
+			// If no chapters found on this page, stop
+			if (!found) break;
+			page++;
+		}
+
+		return {
+			chapters: allChapters,
+			maxChapter: allChapters.length
+		};
+	} catch (err) {
+		console.log("[DEBUG] scrapeChaptersFromUrl error:", err);
+		return null;
+	}
+}
 // Helper: JSON response
 function json(data, status = 200) {
 	return new Response(JSON.stringify(data), {

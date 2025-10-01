@@ -252,7 +252,17 @@
 						   placeholder="Search stories by title..."
 						   autocomplete="off" />
 				</div>
-
+				<!-- Reload All Stories Button -->
+				<div class="mb-4 flex items-center gap-2">
+					<button id="reload-all-stories-btn"
+							class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-md flex items-center gap-2"
+							title="Reload all stories">
+						<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 20 20" stroke="currentColor">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582M19 11a7.002 7.002 0 01-13.197 4.25M5 19v-5h-.582M1 9a7.002 7.002 0 0113.197-4.25" />
+						</svg>
+						Reload All
+					</button>
+				</div>
 				<!-- Stories Grid -->
 				<div>
 					<h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-6">Your Saved Stories (<span id="stories-count">0</span>)</h2>
@@ -606,6 +616,46 @@
 			});
 		}
 
+		document.getElementById('reload-all-stories-btn').addEventListener('click', async function () {
+			const btn = this;
+			btn.disabled = true;
+			const originalHtml = btn.innerHTML;
+			btn.innerHTML = '<span class="animate-spin">⟳</span> Reloading...';
+
+			// Get all current stories
+			const stories = currentStories;
+			if (!stories || stories.length === 0) {
+				alert('No stories to reload.');
+				btn.disabled = false;
+				btn.innerHTML = originalHtml;
+				return;
+			}
+
+			let errors = [];
+			for (const story of stories) {
+				try {
+					const res = await fetch(`/api/stories/${story.id}/update-chapters`, { method: 'POST' });
+					if (!res.ok) {
+						const data = await res.json();
+						errors.push(`${story.title}: ${data.error || 'Failed'}`);
+					}
+				} catch (err) {
+					errors.push(`${story.title}: ${err.message}`);
+				}
+			}
+
+			const user = JSON.parse(localStorage.getItem('storySaverUser') || 'null');
+			if (user) await loadStories(user.id);
+
+			btn.disabled = false;
+			btn.innerHTML = originalHtml;
+
+			if (errors.length > 0) {
+				alert('Some stories failed to reload:\n' + errors.join('\n'));
+			} else {
+				alert('All stories reloaded!');
+			}
+		});
 		function openEditModal(story) {
 			editingStoryId = story.id;
 			document.getElementById('add-story-modal').classList.remove('hidden');
