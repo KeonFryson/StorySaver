@@ -368,7 +368,7 @@ async function getQQCsrfToken() {
 }
 
 // --- UPDATED: Collect all cookies from login response ---
-async function loginToQQ(username, password) {
+async function loginToQQ(username, password, threadUrl) {
 	const loginUrl = 'https://forum.questionablequesting.com/login/login';
 	const csrfToken = await getQQCsrfToken();
 	const formData = new URLSearchParams();
@@ -386,11 +386,22 @@ async function loginToQQ(username, password) {
 		body: formData
 	});
 
+	let cookies = [];
 	const setCookie = response.headers.get('set-cookie');
-	if (!setCookie) throw new Error('Login failed: No cookie received');
-	// Collect all cookies (split by comma, then take each before the first semicolon)
-	const cookies = setCookie.split(',').map(c => c.split(';')[0]).join('; ');
-	return cookies;
+	if (setCookie) cookies.push(...setCookie.split(',').map(c => c.split(';')[0]));
+
+	// Fetch main thread page to get additional cookies
+	const threadResponse = await fetch(threadUrl, {
+		headers: {
+			'Cookie': cookies.join('; '),
+			'User-Agent': 'Mozilla/5.0 (compatible; StorySaverBot/1.0)',
+			'Referer': 'https://forum.questionablequesting.com/'
+		}
+	});
+	const threadSetCookie = threadResponse.headers.get('set-cookie');
+	if (threadSetCookie) cookies.push(...threadSetCookie.split(',').map(c => c.split(';')[0]));
+
+	return cookies.join('; ');
 }
 
 async function scrapeChaptersFromUrl(url) {
@@ -414,9 +425,12 @@ async function scrapeChaptersFromUrl(url) {
 	const QQ_PASSWORD = "@ChaosDev112115";
 	let qqSessionCookie = null;
 
+
 	if (site === 'QQ') {
+		// Extract thread URL (remove /page-... and /threadmarks... and fragments)
+		const threadUrl = url.split('/page-')[0].split('/threadmarks')[0].split('#')[0];
 		try {
-			qqSessionCookie = await loginToQQ(QQ_USERNAME, QQ_PASSWORD);
+			qqSessionCookie = await loginToQQ(QQ_USERNAME, QQ_PASSWORD, threadUrl);
 			console.log(`[SCRAPE] QQ login successful, got cookie.`);
 		} catch (err) {
 			console.log(`[SCRAPE] QQ login failed:`, err);
@@ -437,15 +451,14 @@ async function scrapeChaptersFromUrl(url) {
 		console.log(`[SCRAPE] Fetching page: ${pageUrl}`);
 		let response;
 		if (site === 'QQ' && qqSessionCookie) {
-			// --- UPDATED: Add more browser-like headers ---
 			response = await fetch(pageUrl, {
 				headers: {
-					'Cookie': qqSessionCookie,
-					'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-					'Referer': url,
-					'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+					'Cookie': qqSessionCookie, // Should include xf_csrf, xf_user, xf_session
+					'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36',
+					'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
 					'Accept-Language': 'en-US,en;q=0.9',
-					'Connection': 'keep-alive'
+					'Connection': 'keep-alive',
+					'Referer': url.split('/threadmarks')[0] // Use main thread URL as referer
 				}
 			});
 		} else {
