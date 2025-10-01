@@ -358,8 +358,13 @@ export default {
 			try {
 				const res = await fetch(urlToScrape, { headers: { "User-Agent": "StorySaverBot/1.0" } });
 				if (!res.ok) {
-					return json({ error: "Failed to fetch source URL" }, 400);
+					return json({
+						error: "Failed to fetch source URL",
+						status: res.status,
+						statusText: res.statusText
+					}, res.status);
 				}
+
 				const html = await res.text();
 
 				// Helper: get site type from URL
