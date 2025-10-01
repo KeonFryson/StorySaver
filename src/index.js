@@ -361,7 +361,7 @@ export default {
 			const userKey = request.headers.get("x-user-id") || request.headers.get("x-forwarded-for") || "global";
 			const now = Date.now();
 			const lastScrape = scrapeRateLimit.get(userKey) || 0;
-			if (now - lastScrape < 60 * 1000) { // 1 minute
+			if (now - lastScrape < 60 * 60 * 1000) { // 1 minute
 				return json({ error: "Rate limit: Only one scrape per minute allowed." }, 429);
 			}
 			scrapeRateLimit.set(userKey, now);
