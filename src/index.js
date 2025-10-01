@@ -437,7 +437,7 @@ export default {
 						}
 						maxChapter = chapters.length;
 						currentChapter = chapters[chapters.length - 1] || null;
-						currentThreadmarkNumber = currentChapter ? chapters.length : null;
+						//currentThreadmarkNumber = currentChapter ? chapters.length : null;
 						chapterUrl = currentChapter ? currentChapter.url : url;
 
 						if (chapters.length === 0) {
@@ -457,7 +457,6 @@ export default {
 						chapters,
 						chapter: currentChapter ? currentChapter.title : "",
 						maxChapter,
-						currentThreadmarkNumber,
 						chapterUrl,
 						url
 					};
