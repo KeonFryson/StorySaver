@@ -367,6 +367,7 @@ async function getQQCsrfToken() {
 	return match[1];
 }
 
+// --- UPDATED: Collect all cookies from login response ---
 async function loginToQQ(username, password) {
 	const loginUrl = 'https://forum.questionablequesting.com/login/login';
 	const csrfToken = await getQQCsrfToken();
@@ -387,9 +388,11 @@ async function loginToQQ(username, password) {
 
 	const setCookie = response.headers.get('set-cookie');
 	if (!setCookie) throw new Error('Login failed: No cookie received');
-	const cookieValue = setCookie.split(';')[0];
-	return cookieValue;
+	// Collect all cookies (split by comma, then take each before the first semicolon)
+	const cookies = setCookie.split(',').map(c => c.split(';')[0]).join('; ');
+	return cookies;
 }
+
 async function scrapeChaptersFromUrl(url) {
 	function getSiteType(url) {
 		if (url.includes('sufficientvelocity.com')) return 'SV';
@@ -434,11 +437,15 @@ async function scrapeChaptersFromUrl(url) {
 		console.log(`[SCRAPE] Fetching page: ${pageUrl}`);
 		let response;
 		if (site === 'QQ' && qqSessionCookie) {
+			// --- UPDATED: Add more browser-like headers ---
 			response = await fetch(pageUrl, {
 				headers: {
 					'Cookie': qqSessionCookie,
-					'User-Agent': 'Mozilla/5.0 (compatible; StorySaverBot/1.0)',
-					'Referer': 'https://forum.questionablequesting.com/'
+					'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+					'Referer': url,
+					'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+					'Accept-Language': 'en-US,en;q=0.9',
+					'Connection': 'keep-alive'
 				}
 			});
 		} else {
