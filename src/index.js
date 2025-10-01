@@ -1,4 +1,3 @@
-const scrapeRateLimit = new Map(); // key: user or IP, value: timestamp
 export default {
 	async fetch(request, env) {
 		const url = new URL(request.url);
@@ -235,53 +234,6 @@ export default {
 			}
 		}
 
-		if (pathname.startsWith("/api/stories/") && request.method === "PUT") {
-			const id = pathname.split("/").pop();
-			const body = await getJsonBody(request);
-			if (!id || !body) {
-				return json({ error: "Missing story id or body" }, 400);
-			}
-			try {
-				const stmt = env.storytracker_db.prepare(
-					`UPDATE stories SET
-				title = ?,
-				description = ?,
-				author = ?,
-				datesaved = ?,
-				chapter = ?,
-				maxChapter = ?,
-				chapterUrl = ?,
-				tags = ?,
-				chapters = ?,
-				baseUrl = ?,
-				url = ?,
-				currentThreadmarkNumber = ?
-			WHERE id = ?`
-				);
-				const result = await stmt.bind(
-					body.title,
-					body.description || null,
-					body.author || null,
-					body.datesaved || null,
-					body.chapter || null,
-					body.maxChapter || null,
-					body.chapterUrl || null,
-					body.tags || null,
-					body.chapters ? JSON.stringify(body.chapters) : null,
-					body.baseUrl || null,
-					body.url || null,
-					body.currentThreadmarkNumber || null,
-					id
-				).run();
-				if (result.changes === 0) {
-					return json({ error: "Story not found" }, 404);
-				}
-				return json({ success: true, updated: true });
-			} catch (err) {
-				return json({ error: err.message }, 400);
-			}
-		}
-
 		// --- CHAPTERS ---
 
 		// Create chapter: POST /api/chapters { story_id, title, content, chapter_number }
@@ -349,181 +301,24 @@ export default {
 			}
 		}
 
-
-		// --- SCRAPE ENDPOINT ---
-		// --- SCRAPE ENDPOINT ---
-		if (pathname === "/api/scrape" && request.method === "GET") {
-			const urlToScrape = searchParams.get("url");
-			if (!urlToScrape) {
-				return json({ error: "Missing url parameter" }, 400);
+		// List tracking: GET /api/tracking?user_id=#
+		if (pathname === "/api/tracking" && request.method === "GET") {
+			const user_id = searchParams.get("user_id");
+			console.log(`[DEBUG] /api/tracking GET for user_id: ${user_id}`);
+			if (!user_id) {
+				console.log(`[DEBUG] Missing user_id`);
+				return json({ error: "Missing user_id" }, 400);
 			}
-			// --- Rate limiting logic ---
-			const userKey = request.headers.get("x-user-id") || request.headers.get("x-forwarded-for") || "global";
-			const now = Date.now();
-			const lastScrape = scrapeRateLimit.get(userKey) || 0;
-			if (now - lastScrape < 60 * 60 * 1000) { // 1 minute
-				return json({ error: "Rate limit: Only one scrape per minute allowed." }, 429);
-			}
-			scrapeRateLimit.set(userKey, now);
-
-			try {
-				const res = await fetch(urlToScrape, { headers: { "User-Agent": "StorySaverBot/1.0" } });
-				if (!res.ok) {
-					return json({
-						error: "Failed to fetch source URL",
-						status: res.status,
-						statusText: res.statusText
-					}, res.status);
-				}
-
-				const html = await res.text();
-
-				// Helper: get site type from URL
-				function getSiteTypeFromUrl(url) {
-					const host = (new URL(url)).hostname;
-					if (host.includes('sufficientvelocity.com')) return 'SV';
-					if (host.includes('questionablequesting.com')) return 'QQ';
-					if (host.includes('forums.sufficientvelocity.com')) return 'SV';
-					if (host.includes('forum.questionablequesting.com')) return 'QQ';
-					if (host.includes('spacebattles.com')) return 'SB';
-					return 'GENERIC';
-				}
-
-				const site = getSiteTypeFromUrl(urlToScrape);
-
-				// Use DOMParser if available, fallback to regex for environments without DOMParser
-				let doc;
-				if (typeof DOMParser !== "undefined") {
-					const parser = new DOMParser();
-					doc = parser.parseFromString(html, "text/html");
-				}
-
-				// XenForo forums (SB, SV, QQ)
-				function scrapeXenforo(doc, html, url) {
-					let title = "";
-					let author = "";
-					let desc = "";
-					let chapters = [];
-					let maxChapter = null;
-					let currentChapter = null;
-					let currentThreadmarkNumber = null;
-					let chapterUrl = url;
-
-					if (doc) {
-						title = doc.querySelector('h1.p-title-value')?.textContent?.trim() || doc.querySelector('title')?.textContent?.trim() || "";
-						author = doc.querySelector('.message-user .username')?.textContent?.trim() || "";
-						desc = doc.querySelector('.message-body .bbWrapper')?.textContent?.trim() || "";
-						doc.querySelectorAll('.structItem--threadmark .structItem-title a, .structItem-title a[href*="threadmarks"]').forEach(a => {
-							chapters.push({
-								title: a.textContent.trim(),
-								url: a.href
-							});
-						});
-						if (chapters.length === 0) {
-							doc.querySelectorAll('.message-threadmarkList .structItem-title a').forEach(a => {
-								chapters.push({
-									title: a.textContent.trim(),
-									url: a.href
-								});
-							});
-						}
-						maxChapter = chapters.length;
-						currentChapter = chapters[chapters.length - 1] || null;
-						chapterUrl = currentChapter ? currentChapter.url : url;
-					} else {
-						// Fallback: regex parsing
-						const titleMatch = html.match(/<h1[^>]*class="p-title-value"[^>]*>([^<]+)<\/h1>/) || html.match(/<title>([^<]+)<\/title>/);
-						title = titleMatch ? titleMatch[1].trim() : "";
-						const authorMatch = html.match(/<a[^>]*class="username"[^>]*>([^<]+)<\/a>/);
-						author = authorMatch ? authorMatch[1].trim() : "";
-						const descMatch = html.match(/<div[^>]*class="message-body[^"]*"[^>]*>\s*<div[^>]*class="bbWrapper"[^>]*>([\s\S]*?)<\/div>/);
-						desc = descMatch ? descMatch[1].replace(/<[^>]+>/g, '').trim() : "";
-
-						const chapterRegex = /<a[^>]*class="structItem-title"[^>]*href="([^"]+)"[^>]*>([^<]+)<\/a>/g;
-						let match;
-						while ((match = chapterRegex.exec(html)) !== null) {
-							chapters.push({
-								title: match[2].trim(),
-								url: match[1]
-							});
-						}
-						maxChapter = chapters.length;
-						currentChapter = chapters[chapters.length - 1] || null;
-						chapterUrl = currentChapter ? currentChapter.url : url;
-
-						if (chapters.length === 0) {
-							console.log(`[DEBUG] scrapeXenforo fallback: No chapters found for URL: ${url}`);
-							const idx = html.indexOf('structItem-title');
-							if (idx !== -1) {
-								console.log(`[DEBUG] scrapeXenforo fallback: HTML around structItem-title: ${html.slice(Math.max(0, idx - 250), idx + 250)}`);
-							} else {
-								console.log(`[DEBUG] scrapeXenforo fallback: HTML sample: ${html.slice(0, 500)}`);
-							}
-						}
-					}
-					return {
-						title,
-						author,
-						description: desc,
-						chapters,
-						chapter: currentChapter ? currentChapter.title : "",
-						maxChapter,
-						chapterUrl,
-						url
-					};
-				}
-
-				// AO3 Example
-				function scrapeAO3(html, url) {
-					const titleMatch = html.match(/<h2 class="title heading">([^<]+)<\/h2>/);
-					const authorMatch = html.match(/rel="author">([^<]+)<\/a>/);
-					const descMatch = html.match(/<blockquote class="userstuff">([\s\S]*?)<\/blockquote>/);
-					const chapterMatch = html.match(/Chapter (\d+) of (\d+)/);
-					return {
-						title: titleMatch ? titleMatch[1].trim() : "",
-						author: authorMatch ? authorMatch[1].trim() : "",
-						description: descMatch ? descMatch[1].replace(/<[^>]+>/g, '').trim() : "",
-						maxChapter: chapterMatch ? parseInt(chapterMatch[2], 10) : null,
-						chapter: chapterMatch ? `Chapter ${chapterMatch[1]}` : "",
-						chapterUrl: url,
-						currentThreadmarkNumber: chapterMatch ? parseInt(chapterMatch[1], 10) : null,
-						chapters: [],
-						url
-					};
-				}
-
-				// Generic fallback
-				function scrapeGeneric(doc, html, url) {
-					const title = doc?.querySelector("title")?.textContent?.trim() || (html.match(/<title>([^<]+)<\/title>/)?.[1] || "");
-					return {
-						title,
-						author: "",
-						description: "",
-						maxChapter: null,
-						chapter: "",
-						chapterUrl: url,
-						currentThreadmarkNumber: null,
-						chapters: [],
-						url
-					};
-				}
-
-				let result;
-				if (site === 'SB' || site === 'SV' || site === 'QQ') {
-					result = scrapeXenforo(doc, html, urlToScrape);
-				} else if (urlToScrape.includes("archiveofourown.org")) {
-					result = scrapeAO3(html, urlToScrape);
-				} else {
-					result = scrapeGeneric(doc, html, urlToScrape);
-				}
-
-				return json(result);
-			} catch (err) {
-				console.log("[DEBUG] Scrape error:", err);
-				return json({ error: "Scrape failed", details: err.message }, 500);
-			}
+			const { results } = await env.storytracker_db.prepare(
+				"SELECT * FROM user_story_tracking WHERE user_id = ?"
+			).bind(user_id).all();
+			return json(results);
 		}
-	}
+
+		console.log(`[DEBUG] Not found: ${pathname}`);
+		// Default: Not found
+		return new Response("Not found", { status: 404 });
+	},
 };
 
 // Helper: JSON response
