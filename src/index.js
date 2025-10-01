@@ -362,15 +362,18 @@ async function loginToQQ(username, password) {
 	const response = await fetch(loginUrl, {
 		method: 'POST',
 		headers: {
-			'Content-Type': 'application/x-www-form-urlencoded'
+			'Content-Type': 'application/x-www-form-urlencoded',
+			'User-Agent': 'Mozilla/5.0 (compatible; StorySaverBot/1.0)',
+			'Referer': 'https://forum.questionablequesting.com/'
 		},
 		body: formData
 	});
 
-	// Extract cookie from response headers
 	const setCookie = response.headers.get('set-cookie');
 	if (!setCookie) throw new Error('Login failed: No cookie received');
-	return setCookie;
+	// Only the cookie value
+	const cookieValue = setCookie.split(';')[0];
+	return cookieValue;
 }
 
 async function scrapeChaptersFromUrl(url) {
@@ -419,7 +422,9 @@ async function scrapeChaptersFromUrl(url) {
 		if (site === 'QQ' && qqSessionCookie) {
 			response = await fetch(pageUrl, {
 				headers: {
-					'Cookie': qqSessionCookie
+					'Cookie': qqSessionCookie,
+					'User-Agent': 'Mozilla/5.0 (compatible; StorySaverBot/1.0)',
+					'Referer': 'https://forum.questionablequesting.com/'
 				}
 			});
 		} else {
