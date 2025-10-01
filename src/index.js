@@ -301,19 +301,132 @@ export default {
 			}
 		}
 
-		// List tracking: GET /api/tracking?user_id=#
-		if (pathname === "/api/tracking" && request.method === "GET") {
-			const user_id = searchParams.get("user_id");
-			console.log(`[DEBUG] /api/tracking GET for user_id: ${user_id}`);
-			if (!user_id) {
-				console.log(`[DEBUG] Missing user_id`);
-				return json({ error: "Missing user_id" }, 400);
+
+		// --- SCRAPE ENDPOINT ---
+		if (pathname === "/api/scrape" && request.method === "GET") {
+			const urlToScrape = searchParams.get("url");
+			if (!urlToScrape) {
+				return json({ error: "Missing url parameter" }, 400);
 			}
-			const { results } = await env.storytracker_db.prepare(
-				"SELECT * FROM user_story_tracking WHERE user_id = ?"
-			).bind(user_id).all();
-			return json(results);
+			try {
+				const res = await fetch(urlToScrape, { headers: { "User-Agent": "StorySaverBot/1.0" } });
+				if (!res.ok) {
+					return json({ error: "Failed to fetch source URL" }, 400);
+				}
+				const html = await res.text();
+
+				// Helper: get site type from URL
+				function getSiteTypeFromUrl(url) {
+					const host = (new URL(url)).hostname;
+					if (host.includes('sufficientvelocity.com')) return 'SV';
+					if (host.includes('questionablequesting.com')) return 'QQ';
+					if (host.includes('forums.sufficientvelocity.com')) return 'SV';
+					if (host.includes('forum.questionablequesting.com')) return 'QQ';
+					if (host.includes('spacebattles.com')) return 'SB';
+					return 'GENERIC';
+				}
+
+				const site = getSiteTypeFromUrl(urlToScrape);
+
+				// Use DOMParser if available, fallback to regex for environments without DOMParser
+				let doc;
+				if (typeof DOMParser !== "undefined") {
+					const parser = new DOMParser();
+					doc = parser.parseFromString(html, "text/html");
+				}
+
+				// XenForo forums (SB, SV, QQ)
+				function scrapeXenforo(doc, url) {
+					// Title
+					const title = doc.querySelector('h1.p-title-value')?.textContent?.trim() || doc.querySelector('title')?.textContent?.trim() || "";
+					// Author
+					const author = doc.querySelector('.message-user .username')?.textContent?.trim() || "";
+					// Description
+					const desc = doc.querySelector('.message-body .bbWrapper')?.textContent?.trim() || "";
+					// Chapters/Threadmarks
+					let chapters = [];
+					doc.querySelectorAll('.structItem--threadmark .structItem-title a, .structItem-title a[href*="threadmarks"]').forEach(a => {
+						chapters.push({
+							title: a.textContent.trim(),
+							url: a.href
+						});
+					});
+					if (chapters.length === 0) {
+						doc.querySelectorAll('.message-threadmarkList .structItem-title a').forEach(a => {
+							chapters.push({
+								title: a.textContent.trim(),
+								url: a.href
+							});
+						});
+					}
+					const maxChapter = chapters.length;
+					// Current chapter
+					let currentChapter = chapters[chapters.length - 1] || null;
+					let currentThreadmarkNumber = currentChapter ? chapters.length : null;
+					return {
+						title,
+						author,
+						description: desc,
+						chapters,
+						chapter: currentChapter ? currentChapter.title : "",
+						maxChapter,
+						currentThreadmarkNumber,
+						chapterUrl: currentChapter ? currentChapter.url : url,
+						url
+					};
+				}
+
+				// AO3 Example
+				function scrapeAO3(html, url) {
+					const titleMatch = html.match(/<h2 class="title heading">([^<]+)<\/h2>/);
+					const authorMatch = html.match(/rel="author">([^<]+)<\/a>/);
+					const descMatch = html.match(/<blockquote class="userstuff">([\s\S]*?)<\/blockquote>/);
+					const chapterMatch = html.match(/Chapter (\d+) of (\d+)/);
+					return {
+						title: titleMatch ? titleMatch[1].trim() : "",
+						author: authorMatch ? authorMatch[1].trim() : "",
+						description: descMatch ? descMatch[1].replace(/<[^>]+>/g, '').trim() : "",
+						maxChapter: chapterMatch ? parseInt(chapterMatch[2], 10) : null,
+						chapter: chapterMatch ? `Chapter ${chapterMatch[1]}` : "",
+						chapterUrl: url,
+						currentThreadmarkNumber: chapterMatch ? parseInt(chapterMatch[1], 10) : null,
+						chapters: [],
+						url
+					};
+				}
+
+				// Generic fallback
+				function scrapeGeneric(doc, html, url) {
+					const title = doc?.querySelector("title")?.textContent?.trim() || (html.match(/<title>([^<]+)<\/title>/)?.[1] || "");
+					return {
+						title,
+						author: "",
+						description: "",
+						maxChapter: null,
+						chapter: "",
+						chapterUrl: url,
+						currentThreadmarkNumber: null,
+						chapters: [],
+						url
+					};
+				}
+
+				let result;
+				if (site === 'SB' || site === 'SV' || site === 'QQ') {
+					result = scrapeXenforo(doc, urlToScrape);
+				} else if (urlToScrape.includes("archiveofourown.org")) {
+					result = scrapeAO3(html, urlToScrape);
+				} else {
+					result = scrapeGeneric(doc, html, urlToScrape);
+				}
+
+				return json(result);
+			} catch (err) {
+				console.log("[DEBUG] Scrape error:", err);
+				return json({ error: "Scrape failed", details: err.message }, 500);
+			}
 		}
+
 
 		console.log(`[DEBUG] Not found: ${pathname}`);
 		// Default: Not found
