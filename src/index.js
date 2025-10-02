@@ -48,11 +48,6 @@ export default {
 			return hash === storedHash;
 		}
 
-		// Add this to your fetch event handler
-		if (request.method === 'GET' && (url.pathname === '/' || url.pathname === '/login')) {
-			return serveStaticAsset('public/index.html');
-		}
-
 		// --- USERS ---
 
 		// Create user: POST /api/users { email, username, password }
