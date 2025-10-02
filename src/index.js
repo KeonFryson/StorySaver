@@ -570,36 +570,6 @@ async function scrapeChaptersFromUrl(url, env) {
 	return { chapters, maxChapter };
 }
 
-async scheduled(event, env, ctx) {
-	console.log('[SCHEDULED] Running chapter scrape job');
-
-	// Example: Scrape chapters for all stories in the DB
-	const { results: stories } = await env.storytracker_db.prepare(
-		"SELECT id, url FROM stories"
-	).all();
-
-	for (const story of stories) {
-		try {
-			const chaptersData = await scrapeChaptersFromUrl(story.url, env);
-			if (chaptersData) {
-				const stmt = env.storytracker_db.prepare(
-					`UPDATE stories SET chapters = ?, maxChapter = ? WHERE id = ?`
-				);
-				await stmt.bind(
-					JSON.stringify(chaptersData.chapters),
-					chaptersData.maxChapter,
-					story.id
-				).run();
-				console.log(`[SCHEDULED] Chapters updated for story: ${story.id}`);
-			} else {
-				console.log(`[SCHEDULED] Failed to scrape chapters for story: ${story.id}`);
-			}
-		} catch (err) {
-			console.log(`[SCHEDULED] Error scraping story ${story.id}:`, err);
-		}
-	}
-}
-}
 
 // Helper: JSON response
 function json(data, status = 200) {
