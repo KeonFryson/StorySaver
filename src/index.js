@@ -199,7 +199,7 @@ export default {
 		if (pathname === "/api/stories" && request.method === "GET") {
 			const user_id = searchParams.get("user_id");
 			console.log(`[DEBUG] /api/stories GET for user_id: ${user_id}`);
-			let query = "SELECT id, user_id, title, description, author, url, baseUrl, datesaved, chapter, maxChapter, maxChapterUpdatedAt, chapterUrl, tags, chapters, currentThreadmarkNumber, created_at FROM stories";
+			let query = "SELECT id, user_id, title, description, author, url, baseUrl, datesaved, chapter, maxChapter, chapterUrl, tags, chapters, currentThreadmarkNumber, created_at FROM stories";
 			let params = [];
 			if (user_id) {
 				query += " WHERE user_id = ?";
@@ -326,64 +326,52 @@ export default {
 			}
 			const story = results[0];
 
-			// Scrape chapters from story.url
+			// Scrape chapters from story.url (implement your scraping logic here)
 			const chaptersData = await scrapeChaptersFromUrl(story.url, env);
 
 			if (!chaptersData) {
 				return json({ error: "Failed to scrape chapters" }, 500);
 			}
 
-			// Only update maxChapterUpdatedAt if maxChapter changed
-			if (story.maxChapter !== chaptersData.maxChapter) {
-				await env.storytracker_db.prepare(
-					`UPDATE stories SET chapters = ?, maxChapter = ?, maxChapterUpdatedAt = CURRENT_TIMESTAMP WHERE id = ?`
-				).bind(
-					JSON.stringify(chaptersData.chapters),
-					chaptersData.maxChapter,
-					storyId
-				).run();
-			} else {
-				await env.storytracker_db.prepare(
-					`UPDATE stories SET chapters = ? WHERE id = ?`
-				).bind(
-					JSON.stringify(chaptersData.chapters),
-					storyId
-				).run();
-			}
+			// Update chapters and maxChapter, but DO NOT change currentThreadmarkNumber
+			const stmt = env.storytracker_db.prepare(
+				`UPDATE stories SET chapters = ?, maxChapter = ? WHERE id = ?`
+			);
+			await stmt.bind(
+				JSON.stringify(chaptersData.chapters),
+				chaptersData.maxChapter,
+				storyId
+			).run();
+
+			console.log(`[DEBUG] Chapters updated for story: ${storyId}`);
+			return json({ success: true, updated: true });
 		}
 
 		console.log(`[DEBUG] Not found: ${pathname}`);
 		// Default: Not found
 		return new Response("Not found", { status: 404 });
 	},
-	
+
 	async scheduled(event, env, ctx) {
 		console.log('[SCHEDULED] Running chapter scrape job');
 
+		// Example: Scrape chapters for all stories in the DB
 		const { results: stories } = await env.storytracker_db.prepare(
-			"SELECT id, url, maxChapter FROM stories"
+			"SELECT id, url FROM stories"
 		).all();
 
 		for (const story of stories) {
 			try {
 				const chaptersData = await scrapeChaptersFromUrl(story.url, env);
 				if (chaptersData) {
-					if (story.maxChapter !== chaptersData.maxChapter) {
-						await env.storytracker_db.prepare(
-							`UPDATE stories SET chapters = ?, maxChapter = ?, maxChapterUpdatedAt = CURRENT_TIMESTAMP WHERE id = ?`
-						).bind(
-							JSON.stringify(chaptersData.chapters),
-							chaptersData.maxChapter,
-							story.id
-						).run();
-					} else {
-						await env.storytracker_db.prepare(
-							`UPDATE stories SET chapters = ? WHERE id = ?`
-						).bind(
-							JSON.stringify(chaptersData.chapters),
-							story.id
-						).run();
-					}
+					const stmt = env.storytracker_db.prepare(
+						`UPDATE stories SET chapters = ?, maxChapter = ? WHERE id = ?`
+					);
+					await stmt.bind(
+						JSON.stringify(chaptersData.chapters),
+						chaptersData.maxChapter,
+						story.id
+					).run();
 					console.log(`[SCHEDULED] Chapters updated for story: ${story.id}`);
 				} else {
 					console.log(`[SCHEDULED] Failed to scrape chapters for story: ${story.id}`);
