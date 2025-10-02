@@ -24,7 +24,10 @@
 			"database_name": "storytracker-db",
 			"database_id": "3b36b83a-4fdf-4510-978f-f4ee1d973232"
 		}
-	]
+	],
+	"triggers": {
+		"crons": [ "0 */1 * * *" ] // Every hour
+	}
 	/**
 	 * Smart Placement
 	 * Docs: https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement
