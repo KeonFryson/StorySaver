@@ -244,6 +244,7 @@
 							<option value="titleZA">Title (Z-A)</option>
 							<option value="maxChapterUpdatedDesc">Last New Chapter Update (Newest First)</option>
 							<option value="maxChapterUpdatedAsc">Last New Chapter Update (Oldest First)</option>
+							<option value="incompleteStories">Incomplete Stories (Current &lt; Max Chapter)</option>
 						</select>
 					</div>
 				</div>
@@ -392,6 +393,15 @@
 					return [...stories].sort((a, b) => new Date(b.maxChapterUpdatedAt || 0) - new Date(a.maxChapterUpdatedAt || 0));
 				case 'maxChapterUpdatedAsc':
 					return [...stories].sort((a, b) => new Date(a.maxChapterUpdatedAt || 0) - new Date(b.maxChapterUpdatedAt || 0));
+				case 'incompleteStories':
+					// Filter for incomplete stories, then sort by last added (newest first)
+					return [...stories]
+						.filter(story => {
+							const current = parseInt(story.chapter || story.currentThreadmarkNumber, 10);
+							const max = parseInt(story.maxChapter, 10);
+							return !isNaN(current) && !isNaN(max) && current < max;
+						})
+						.sort((a, b) => new Date(b.dateSaved || b.created_at) - new Date(a.dateSaved || a.created_at));
 				default:
 					return stories;
 			}
