@@ -393,27 +393,30 @@
 					return [...stories].sort((a, b) => new Date(b.maxChapterUpdatedAt || 0) - new Date(a.maxChapterUpdatedAt || 0));
 				case 'maxChapterUpdatedAsc':
 					return [...stories].sort((a, b) => new Date(a.maxChapterUpdatedAt || 0) - new Date(b.maxChapterUpdatedAt || 0));
-					return [...stories]
-						.filter(story => {
-							let current = null;
-							let max = null;
-							// Prefer currentThreadmarkNumber if available, else chapter
-							if (story.currentThreadmarkNumber && story.maxChapter) {
-								current = parseInt(story.currentThreadmarkNumber, 10);
-								max = parseInt(story.maxChapter, 10);
-							} else if (story.chapter && story.maxChapter) {
-								current = parseInt(story.chapter, 10);
-								max = parseInt(story.maxChapter, 10);
-							}
-							return (
-								current !== null &&
-								max !== null &&
-								!isNaN(current) &&
-								!isNaN(max) &&
-								current < max
-							);
-						})
-						.sort((a, b) => new Date(b.dateSaved || b.created_at) - new Date(a.dateSaved || a.created_at));
+				case 'incompleteStories':
+					// Filter for stories with both current and max chapter as numbers, and current < max
+					const debugFiltered = [...stories].filter(story => {
+						let current = null;
+						let max = null;
+						if (story.currentThreadmarkNumber && story.maxChapter) {
+							current = parseInt(story.currentThreadmarkNumber, 10);
+							max = parseInt(story.maxChapter, 10);
+						} else if (story.chapter && story.maxChapter) {
+							current = parseInt(story.chapter, 10);
+							max = parseInt(story.maxChapter, 10);
+						}
+						const result = (
+							current !== null &&
+							max !== null &&
+							!isNaN(current) &&
+							!isNaN(max) &&
+							current < max
+						);
+						console.debug(`[incompleteStories] "${story.title}" - current: ${current}, max: ${max}, result: ${result}`);
+						return result;
+					});
+					console.debug(`[incompleteStories] Filtered stories count: ${debugFiltered.length}`);
+					return debugFiltered.sort((a, b) => new Date(b.dateSaved || b.created_at) - new Date(a.dateSaved || a.created_at));
 				default:
 					return stories;
 			}
