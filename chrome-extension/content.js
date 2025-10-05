@@ -231,6 +231,8 @@ async function saveStory() {
 
 	localStorage.setItem('savedStories', JSON.stringify(savedStories));
 	console.log("Story saved to localStorage");
+	// Notify StorySaver app to reload stories
+	localStorage.setItem('storySaverStoryAdded', '1');
 
 	return {
 		title,

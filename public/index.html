@@ -778,6 +778,16 @@
 			document.getElementById('signin-btn').classList.remove('hidden');
 			renderStories([]);
 		}
+		window.addEventListener('storage', async function (e) {
+			if (e.key === 'storySaverStoryAdded' && e.newValue) {
+				const user = JSON.parse(localStorage.getItem('storySaverUser') || 'null');
+				if (user) {
+					await loadStories(user.id);
+				}
+
+				localStorage.removeItem('storySaverStoryAdded');
+			}
+		});
 	</script>
 </body>
 </html>
